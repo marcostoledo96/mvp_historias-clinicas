@@ -20,7 +20,7 @@ const controladorPacientes = {
       res.json(pacientes);
     } catch (error) {
       console.error('Error al obtener pacientes:', error);
-      res.status(500).json({ error: 'Error interno del servidor' });
+      res.status(500).json({ error: error.message });
     }
   },
 
@@ -40,7 +40,7 @@ const controladorPacientes = {
       res.json(paciente);
     } catch (error) {
       console.error('Error al obtener paciente:', error);
-      res.status(500).json({ error: 'Error interno del servidor' });
+      res.status(500).json({ error: error.message });
     }
   },
 
@@ -89,7 +89,7 @@ const controladorPacientes = {
       if (error.code === '23505') { // Código de PostgreSQL para violación de unique constraint
         res.status(409).json({ error: 'Paciente ya registrado con este DNI' });
       } else {
-        res.status(500).json({ error: 'Error interno del servidor' });
+        res.status(500).json({ error: error.message });
       }
     }
   },
@@ -108,7 +108,7 @@ const controladorPacientes = {
       res.status(201).json({ id_paciente: nuevo.id_paciente, nombre: nuevo.nombre, apellido: nuevo.apellido });
     } catch (error) {
       console.error('Error al crear paciente mínimo:', error);
-      res.status(500).json({ error: 'Error interno del servidor' });
+      res.status(500).json({ error: error.message });
     }
   },
 
@@ -154,7 +154,7 @@ const controladorPacientes = {
       if (error.code === '23505') {
         res.status(409).json({ error: 'Ya existe otro paciente con este DNI' });
       } else {
-        res.status(500).json({ error: 'Error interno del servidor' });
+        res.status(500).json({ error: error.message });
       }
     }
   },
@@ -176,7 +176,7 @@ const controladorPacientes = {
 
     } catch (error) {
       console.error('Error al eliminar paciente:', error);
-      res.status(500).json({ error: 'Error interno del servidor' });
+      res.status(500).json({ error: error.message });
     }
   },
 
@@ -196,7 +196,7 @@ const controladorPacientes = {
       res.json(paciente);
     } catch (error) {
       console.error('Error al buscar paciente por DNI:', error);
-      res.status(500).json({ error: 'Error interno del servidor' });
+      res.status(500).json({ error: error.message });
     }
   }
 };

@@ -25,7 +25,7 @@ const controladorTurnos = {
       res.json(turnos);
     } catch (error) {
       console.error('Error al obtener turnos:', error);
-      res.status(500).json({ error: 'Error interno del servidor' });
+      res.status(500).json({ error: error.message });
     }
   },
 
@@ -45,7 +45,7 @@ const controladorTurnos = {
       res.json(turno);
     } catch (error) {
       console.error('Error al obtener turno:', error);
-      res.status(500).json({ error: 'Error interno del servidor' });
+      res.status(500).json({ error: error.message });
     }
   },
 
@@ -61,7 +61,7 @@ const controladorTurnos = {
       res.json(turnos);
     } catch (error) {
       console.error('Error al obtener turnos del día:', error);
-      res.status(500).json({ error: 'Error interno del servidor' });
+      res.status(500).json({ error: error.message });
     }
   },
 
@@ -75,7 +75,7 @@ const controladorTurnos = {
       res.json(turnos);
     } catch (error) {
       console.error('Error al obtener turnos de hoy:', error);
-      res.status(500).json({ error: 'Error interno del servidor' });
+      res.status(500).json({ error: error.message });
     }
   },
 
@@ -91,7 +91,7 @@ const controladorTurnos = {
       res.json(turnos);
     } catch (error) {
       console.error('Error al obtener turnos del paciente:', error);
-      res.status(500).json({ error: 'Error interno del servidor' });
+      res.status(500).json({ error: error.message });
     }
   },
 
@@ -133,7 +133,7 @@ const controladorTurnos = {
 
     } catch (error) {
       console.error('Error al crear turno:', error);
-      res.status(500).json({ error: 'Error interno del servidor' });
+      res.status(500).json({ error: error.message });
     }
   },
 
@@ -179,7 +179,7 @@ const controladorTurnos = {
 
     } catch (error) {
       console.error('Error al actualizar turno:', error);
-      res.status(500).json({ error: 'Error interno del servidor' });
+      res.status(500).json({ error: error.message });
     }
   },
 
@@ -200,7 +200,7 @@ const controladorTurnos = {
 
     } catch (error) {
       console.error('Error al eliminar turno:', error);
-      res.status(500).json({ error: 'Error interno del servidor' });
+      res.status(500).json({ error: error.message });
     }
   },
 
@@ -234,7 +234,7 @@ const controladorTurnos = {
 
     } catch (error) {
       console.error('Error al marcar situación del turno:', error);
-      res.status(500).json({ error: 'Error interno del servidor' });
+      res.status(500).json({ error: error.message });
     }
   }
 };

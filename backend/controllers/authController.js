@@ -69,7 +69,7 @@ const authController = {
     } catch (error) {
       console.error('Error in login controller:', error);
       console.error('Error stack:', error.stack);
-      res.status(500).json({ error: 'Error interno del servidor' });
+      res.status(500).json({ error: error.message });
     }
   },
 
@@ -132,7 +132,7 @@ const authController = {
 
     } catch (error) {
       console.error('Error en registro:', error);
-      res.status(500).json({ error: 'Error interno del servidor' });
+      res.status(500).json({ error: error.message });
     }
   }
 };
@@ -153,7 +153,7 @@ authController.solicitarRecuperacion = async (req, res) => {
     res.json({ mensaje: 'Código enviado' });
   } catch (e) {
     console.error('Error solicitarRecuperacion:', e);
-    res.status(500).json({ error: 'Error interno del servidor' });
+    res.status(500).json({ error: e.message });
   }
 };
 
@@ -179,7 +179,7 @@ authController.restablecerConCodigo = async (req, res) => {
     res.json({ mensaje: 'Contraseña restablecida' });
   } catch (e) {
     console.error('Error restablecerConCodigo:', e);
-    res.status(500).json({ error: 'Error interno del servidor' });
+    res.status(500).json({ error: e.message });
   }
 };
 
@@ -194,7 +194,7 @@ authController.obtenerPerfil = async (req, res) => {
     res.json({ id: usuario.id_usuario, email: usuario.email, nombre: usuario.nombre_completo, rol: usuario.rol });
   } catch (e) {
     console.error('Error obtenerPerfil:', e);
-    res.status(500).json({ error: 'Error interno del servidor' });
+    res.status(500).json({ error: e.message });
   }
 };
 
@@ -216,7 +216,7 @@ authController.actualizarPerfil = async (req, res) => {
     res.json({ mensaje: 'Perfil actualizado', usuario: { id: actualizado.id_usuario, email: actualizado.email, nombre: actualizado.nombre_completo, rol: actualizado.rol } });
   } catch (e) {
     console.error('Error actualizarPerfil:', e);
-    res.status(500).json({ error: 'Error interno del servidor' });
+    res.status(500).json({ error: e.message });
   }
 };
 
@@ -237,7 +237,7 @@ authController.cambiarPassword = async (req, res) => {
     res.json({ mensaje: 'Contraseña actualizada' });
   } catch (e) {
     console.error('Error cambiarPassword:', e);
-    res.status(500).json({ error: 'Error interno del servidor' });
+    res.status(500).json({ error: e.message });
   }
 };
 

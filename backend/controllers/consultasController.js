@@ -23,7 +23,7 @@ const controladorConsultas = {
       res.json(consultas);
     } catch (error) {
       console.error('Error al obtener consultas:', error);
-      res.status(500).json({ error: 'Error interno del servidor' });
+      res.status(500).json({ error: error.message });
     }
   },
 
@@ -43,7 +43,7 @@ const controladorConsultas = {
       res.json(consulta);
     } catch (error) {
       console.error('Error al obtener consulta:', error);
-      res.status(500).json({ error: 'Error interno del servidor' });
+      res.status(500).json({ error: error.message });
     }
   },
 
@@ -59,7 +59,7 @@ const controladorConsultas = {
       res.json(consultas);
     } catch (error) {
       console.error('Error al obtener consultas del paciente:', error);
-      res.status(500).json({ error: 'Error interno del servidor' });
+      res.status(500).json({ error: error.message });
     }
   },
 
@@ -93,7 +93,7 @@ const controladorConsultas = {
 
     } catch (error) {
       console.error('Error al crear consulta:', error);
-      res.status(500).json({ error: 'Error interno del servidor' });
+      res.status(500).json({ error: error.message });
     }
   },
 
@@ -130,7 +130,7 @@ const controladorConsultas = {
 
     } catch (error) {
       console.error('Error al actualizar consulta:', error);
-      res.status(500).json({ error: 'Error interno del servidor' });
+      res.status(500).json({ error: error.message });
     }
   },
 
@@ -151,7 +151,7 @@ const controladorConsultas = {
 
     } catch (error) {
       console.error('Error al eliminar consulta:', error);
-      res.status(500).json({ error: 'Error interno del servidor' });
+      res.status(500).json({ error: error.message });
     }
   },
 
@@ -167,7 +167,7 @@ const controladorConsultas = {
       res.json(consultas);
     } catch (error) {
       console.error('Error al obtener consultas por fecha:', error);
-      res.status(500).json({ error: 'Error interno del servidor' });
+      res.status(500).json({ error: error.message });
     }
   }
 };
