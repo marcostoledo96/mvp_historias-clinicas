@@ -3,7 +3,8 @@
 
 const express = require('express');
 const cors = require('cors');
-const session = require('express-session');
+// Sesiones basadas en cookies (compatibles con serverless)
+const cookieSession = require('cookie-session');
 const path = require('path');
 const { exec } = require('child_process');
 require('dotenv').config();
@@ -52,16 +53,14 @@ app.options('*', cors({ origin: corsOrigin, credentials: true }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Sesiones: MemoryStore (simple para desarrollo)
-app.use(session({
-  secret: process.env.SESSION_SECRET || 'historias_clinicas_secret',
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-    maxAge: 24 * 60 * 60 * 1000,
-  },
+// Sesiones con cookie-session: stateless, ideales para Vercel
+app.use(cookieSession({
+  name: 'session',
+  keys: [process.env.SESSION_SECRET || 'historias_clinicas_secret'],
+  // Por defecto, 24h; se puede ajustar por-request via req.sessionOptions.maxAge
+  maxAge: 24 * 60 * 60 * 1000,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
 }));
 
 // Archivos estáticos del frontend

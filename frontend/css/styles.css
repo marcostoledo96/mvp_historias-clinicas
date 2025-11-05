@@ -742,11 +742,23 @@ textarea.form-input {
   /* Mostrar iniciales y ocultar nombre en móviles para ahorrar espacio */
   .user-avatar .user-name { display: none; }
   .user-avatar .user-initials { display: inline; }
+
+  .header-actions {
+    margin-left: auto;
+    flex: 0 0 auto;
+  }
 }
 
 /* * Compactar gaps en móviles muy pequeños */
 @media (max-width: 480px) {
   .gap-sm-2 { gap: var(--spacing-2) !important; }
+
+  .header-actions {
+    margin-left: auto;
+    flex: 0 0 auto;
+  }
+
+  .user-avatar { padding: 0 8px; }
 }
 
 /* ! 17) Vista de Login (estilos específicos) */

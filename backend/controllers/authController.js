@@ -36,8 +36,9 @@ const authController = {
         return res.status(401).json({ error: 'Credenciales inválidas' });
       }
 
-      // Crear sesión
+      // Crear sesión (cookie-session)
       console.log('Creating session for user:', usuario.id_usuario);
+      req.session = req.session || {};
       req.session.usuarioId = usuario.id_usuario;
       req.session.usuario = {
         id: usuario.id_usuario,
@@ -49,10 +50,10 @@ const authController = {
       // Si el usuario eligió "mantener sesión iniciada", extender duración de cookie (30 días)
       if (remember) {
         const dias30 = 30 * 24 * 60 * 60 * 1000;
-        req.session.cookie.maxAge = dias30;
+        if (req.sessionOptions) req.sessionOptions.maxAge = dias30;
       } else {
         // Cookie de sesión (hasta cerrar navegador)
-        req.session.cookie.expires = false;
+        if (req.sessionOptions) req.sessionOptions.maxAge = undefined;
       }
 
       console.log('Login successful');
@@ -75,13 +76,13 @@ const authController = {
 
   // Cerrar sesión y limpiar datos demo si corresponde
   logout: (req, res) => {
-    req.session.destroy((err) => {
-      if (err) {
-        return res.status(500).json({ error: 'Error al cerrar sesión' });
-      }
-      res.clearCookie('connect.sid');
+    try {
+      // cookie-session: invalidar sesión
+      req.session = null;
       res.json({ mensaje: 'Sesión cerrada exitosamente' });
-    });
+    } catch (err) {
+      return res.status(500).json({ error: 'Error al cerrar sesión' });
+    }
   },
 
   // GET /api/auth/verificar
