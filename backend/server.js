@@ -136,4 +136,5 @@ if (process.env.NODE_ENV !== 'test' && !process.env.VERCEL) {
   iniciar(Number(PORT), MAX_REINTENTOS);
 }
 
-module.exports = app;
+// Exportar handler explícito para Vercel (@vercel/node)
+module.exports = (req, res) => app(req, res);
