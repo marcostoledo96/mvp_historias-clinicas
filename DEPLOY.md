@@ -1,157 +1,85 @@
-# 🚀 Guía para subir a Vercel
+# 🚀 Guía para deploy en Vercel (configuración actual)
 
-## 📋 Cómo deployé mi sistema en Vercel
+Esta guía refleja la configuración vigente del proyecto para desplegar en Vercel con una función serverless que sirve API y frontend estático.
 
-Esta es la guía que seguí para subir mi sistema de historias clínicas a Vercel y hacerlo accesible públicamente.
+## 🏗️ Arquitectura
 
-### 🏗️ Arquitectura que implementé
+- Frontend: archivos estáticos dentro de `frontend/` (servidos por Express)
+- Backend: `backend/server.js` empaquetado como función serverless (@vercel/node)
+- Base de datos: PostgreSQL en Neon
+- Dominio: `tu-proyecto.vercel.app`
 
-- **Frontend**: Archivos estáticos servidos desde `/frontend`
-- **Backend**: API deployada como función serverless
-- **Base de datos**: PostgreSQL en Supabase (ya configurada)
-- **Dominio**: Se genera automáticamente como `mi-proyecto.vercel.app`
+## ✅ Requisitos
 
-### 📋 Lo que necesitas antes de empezar
+- Cuenta en Vercel y GitHub
+- Node.js 18+
 
-1. Cuenta en [Vercel](https://vercel.com)
-2. Cuenta en GitHub (para conectar el repositorio)
-3. Node.js 18+ instalado localmente
+## 🔧 Configuración de Vercel
 
-### 🔧 Pasos que seguí para el deploy
+El repo incluye `vercel.json` ya configurado para:
 
-#### 1. Preparar el repositorio
-
-```bash
-# Me aseguré de estar en la carpeta del proyecto
-cd c:\Users\Marcos\Desktop\Programacion\Github\Historias_clinicas
-
-# Inicialicé git si no estaba inicializado
-git init
-
-# Agregué todos los archivos
-git add .
-
-# Hice commit
-git commit -m "Preparar proyecto para deploy en Vercel"
-
-# Agregué origin (reemplaza con tu URL de GitHub)
-git remote add origin https://github.com/tu-usuario/historias-clinicas.git
-
-# Subí a GitHub
-git push -u origin main
+```json
+{
+    "version": 2,
+    "builds": [
+        { "src": "backend/server.js", "use": "@vercel/node", "config": { "includeFiles": ["frontend/**"] } }
+    ],
+    "routes": [
+        { "src": "/(.*)", "dest": "backend/server.js" }
+    ]
+}
 ```
 
-#### 2. Configuración en Vercel
+No hace falta setear Build Command ni Output Directory manualmente. Dejá Install Command como `npm install` (el postinstall instala dependencias del backend).
 
-1. Fui a [vercel.com](https://vercel.com) e inicié sesión
-2. Hice clic en **"New Project"**
-3. Conecté mi repositorio de GitHub
-4. Seleccioné el repositorio `historias-clinicas`
-5. Configuré estas opciones:
-   - **Framework Preset**: Other
-   - **Root Directory**: `./` (raíz del proyecto)
-   - **Build Command**: `npm run build`
-   - **Output Directory**: `frontend`
-   - **Install Command**: `npm install`
+## 🔐 Variables de entorno
 
-#### 3. Variables de Entorno que configuré
-
-En el dashboard de Vercel, fui a **Settings > Environment Variables** y agregué:
+Configuralas en Vercel > Settings > Environment Variables:
 
 ```
 PORT=3000
-DATABASE_URL=postgresql://postgres.plampupjadhwwguquwwr:darasco887@aws-1-us-east-2.pooler.supabase.com:5432/postgres?sslmode=require
-SESSION_SECRET=historias_clinicas_secret_2024_muy_seguro_123
+DATABASE_URL=postgresql://<usuario>:<password>@<host-neon>:5432/<dbname>?sslmode=require
+SESSION_SECRET=un_secreto_largo_y_aleatorio
 NODE_ENV=production
 NO_SSL=false
 PGSSLMODE=require
 ```
 
-> ⚠️ **Nota importante**: Estas credenciales las incluí específicamente para que sea una demo funcional. En un proyecto real, nunca expondría credenciales de base de datos públicamente.
+Nota: En Neon, usá SSL. Si es necesario, `PGSSLMODE=no-verify`.
 
-#### 4. Deploy final
+## ▶️ Deploy
 
-1. Hice clic en **"Deploy"**
-2. Esperé a que terminara el proceso (2-3 minutos)
-3. Mi aplicación quedó disponible en `https://mi-proyecto.vercel.app`
+1) Importá el repo en Vercel y usá la configuración por defecto (respetando `vercel.json`).
+2) Hacé clic en Deploy. La función serverless expondrá:
+- Frontend: `/` (sirve `frontend/index.html` y demás estáticos)
+- API: `/api/*`
 
-### 🎯 Credenciales para la demo
+## 👤 Credenciales de prueba
 
-Para que otros puedan probar la aplicación, incluí estas credenciales de ejemplo:
+- Doctor: `doctor@clinica.com` / `password123`
+- Admin: `admin@clinica.com` / `password123`
 
-**Usuario de prueba:**
-- Email: `demo@historias.com`
-- Contraseña: `demo123`
+Podés ajustar o crear usuarios con los scripts en `backend/scripts/`.
 
-**Usuario administrador:**
-- Email: `admin@historias.com`  
-- Contraseña: `admin123`
+## � Solución de problemas
 
-> 💡 **Tip**: Podés crear estos usuarios usando los scripts en `backend/scripts/`
+- CORS: verificá los orígenes permitidos (en prod se valida contra el dominio de Vercel).
+- DB: chequeá `DATABASE_URL` (Neon) y SSL.
+- Sesiones: `SESSION_SECRET` definido y cookies habilitadas. En serverless se usa cookie-session.
 
-### 🔧 Comandos útiles para crear usuarios
-
-```bash
-# Crear usuario administrador
-npm run admin:create
-
-# Crear usuario regular
-npm run user:create
-```
-
-### 📁 Estructura de archivos importantes
+## 📁 Archivos relevantes
 
 ```
-├── vercel.json          # Configuración de Vercel
-├── package.json         # Scripts de build
-├── .env.vercel         # Variables de entorno de referencia
-├── .gitignore          # Archivos excluidos
+├── vercel.json          # Configuración del deploy
+├── package.json         # postinstall para deps del backend
 ├── backend/
-│   ├── server.js       # Servidor Express (actualizado para Vercel)
-│   ├── package.json    # Dependencias del backend
+│   ├── server.js        # Express + rutas + estáticos
 │   └── ...
 └── frontend/
-    ├── index.html      # Punto de entrada
-    └── ...
+        ├── index.html
+        └── ...
 ```
 
-### 🚀 URLs importantes después del deploy
+## 🎉 Listo
 
-- **Aplicación**: `https://tu-proyecto.vercel.app`
-- **API**: `https://tu-proyecto.vercel.app/api/*`
-- **Dashboard Vercel**: `https://vercel.com/dashboard`
-
-### 🐛 Solución de problemas
-
-#### Error de CORS
-Si tienes problemas de CORS, verifica que:
-- Las variables de entorno estén configuradas
-- El dominio de Vercel esté en la lista de orígenes permitidos
-
-#### Error de Base de Datos
-- Verifica que `DATABASE_URL` esté correctamente configurada
-- Asegúrate de que Supabase permita conexiones desde Vercel
-
-#### Error de Sesiones
-- Confirma que `SESSION_SECRET` esté configurado
-- Verifica que las cookies estén habilitadas en el navegador
-
-### 📞 Soporte
-
-Si encuentras problemas:
-1. Revisa los logs en el dashboard de Vercel
-2. Verifica las variables de entorno
-3. Comprueba que la base de datos esté accesible
-
-### 🎉 ¡Listo!
-
-Tu sistema de historias clínicas ahora está disponible públicamente en Vercel. Puedes compartir la URL con empleadores, colegas o para incluir en tu portafolio.
-
-**Características desplegadas:**
-- ✅ Sistema completo de autenticación
-- ✅ Gestión de pacientes
-- ✅ Historial de consultas
-- ✅ Sistema de turnos
-- ✅ Panel de administración
-- ✅ Responsive design
-- ✅ Base de datos persistente
+Tras el deploy, accedé a `https://tu-proyecto.vercel.app`.

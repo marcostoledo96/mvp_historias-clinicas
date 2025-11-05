@@ -11,9 +11,9 @@ Sistema web completo que nuestro equipo desarrolló para gestión de historias c
 
 **[Ver Demo en Vercel →](https://tu-proyecto.vercel.app)**
 
-**Credenciales para probar:**
-- Usuario: `demo@historias.com` / `demo123`
-- Admin: `admin@historias.com` / `admin123`
+**Credenciales para probar (datos de ejemplo):**
+- Doctor: `doctor@clinica.com` / `password123`
+- Admin: `admin@clinica.com` / `password123`
 
 ## ✨ Características que implementamos
 
@@ -24,12 +24,12 @@ Sistema web completo que nuestro equipo desarrolló para gestión de historias c
 - 🎨 **Interfaz responsive**
 - 🗄️ **Base de datos PostgreSQL**
 - ☁️ **Deploy en Vercel**
-- 🎭 **Modo demo** sin afectar datos reales
+ 
 
 ## Requisitos técnicos
 
 - Node.js 18+ (recomiendo la versión LTS)
-- PostgreSQL (local o en la nube - yo uso Supabase)
+- PostgreSQL (local o en la nube - recomendado: Neon)
 - Windows PowerShell (las instrucciones están para este shell)
 
 ## Configuración
@@ -37,7 +37,7 @@ Sistema web completo que nuestro equipo desarrolló para gestión de historias c
 Necesitas crear un archivo `.env` dentro de `backend/` con estas variables:
 
 ```
-# Conexión a PostgreSQL (puedes usar una de estas opciones)
+# Conexión a PostgreSQL (puedes usar una de estas opciones; funciona perfecto con Neon)
 DATABASE_URL=postgres://usuario:password@host:5432/basedatos
 # O por separado:
 # DB_HOST=localhost
@@ -52,13 +52,13 @@ SESSION_SECRET=un_secreto_muy_seguro
 # Opcionales
 PORT=3000          # Si omites, usa 3000 por defecto. Si 3000 está ocupado, el servidor reintenta 3001..3005 automáticamente.
 AUTO_OPEN=0        # 1 para abrir navegador al iniciar
-# SSL: por defecto activo; desactivar sólo si tu proveedor lo exige
+# SSL: por defecto activo. En Neon, usar SSL requerido (p.ej. PGSSLMODE=require o no-verify)
 # NO_SSL=true      # Desactiva SSL (evítalo en producción)
-# PGSSLMODE=no-verify | disable | prefer
+# PGSSLMODE=require | no-verify | disable | prefer
 ```
 
 Notas importantes:
-- La conexión implementa SSL robusto por defecto; para proveedores con certificados no verificados, se usa `rejectUnauthorized=false` cuando corresponde.
+- Pensado para Neon (PostgreSQL gestionado). La conexión implementa SSL por defecto; para certificados no verificados, se usa `PGSSLMODE=no-verify`.
 - El servidor escucha `process.env.PORT || 3000` (recomendado: 3000 fijo para desarrollo local).
 
 ## Instalación
@@ -98,7 +98,7 @@ node scripts\create_admin.js --email=admin@clinica.com --password=Secreta123 --n
 npm run admin:create -- --email=admin@clinica.com --password=Secreta123 --nombre="Dra. Admin"
 ```
 
-- Verificar/Ajustar usuario demo y su hash:
+- Verificar/Ajustar usuarios de prueba:
 
 ```powershell
 # Desde backend/
@@ -155,7 +155,7 @@ backend/
 frontend/
   *.html                   # Vistas (login, pacientes, turnos, consultas, etc.)
   js/                      # Módulos JS por página + utils + selector pacientes
-  css/styles.css           # Estilos, utilidades, tema oscuro, Material Symbols
+  css/styles.css           # Estilos, utilidades, Material Symbols
 
 database/
   scripts.sql              # Esquema base
@@ -185,8 +185,8 @@ Autenticación y perfil
 - GET `/api/auth/perfil` (sesión requerida)
 - PUT `/api/auth/perfil` (sesión requerida)
 - PUT `/api/auth/password` (sesión requerida)
-- POST `/api/auth/recuperar` (flujo demo)
-- POST `/api/auth/restablecer` (flujo demo)
+- POST `/api/auth/recuperar`
+- POST `/api/auth/restablecer`
 
 Pacientes
 - GET `/api/pacientes` (q=busqueda opcional)
@@ -220,14 +220,14 @@ Turnos
 ## Solución de problemas
 
 - Puerto 3000 ocupado: usa `netstat -ano | findstr :3000` y `Stop-Process -Id <PID> -Force` en PowerShell.
-- SSL/Supabase: si tu proveedor obliga SSL sin CA, está soportado con `PGSSLMODE=no-verify` o `NO_SSL=true` (evitar en prod).
-- Usuario demo: ejecuta `node scripts\check_seed.js` si no puedes entrar con el usuario de pruebas.
+- SSL/Neon: si tu proveedor obliga SSL sin CA, está soportado con `PGSSLMODE=no-verify` o `NO_SSL=true` (evitar en prod).
+- Usuarios de prueba: ejecuta `node scripts\check_seed.js` si no puedes entrar con las credenciales indicadas.
 
 ## Equipo de Desarrollo
 
 - Toledo Marcos
 - Miszel Veronica
-- Marcos Buono
+- Buono Marcos
 
 ## Licencia
 

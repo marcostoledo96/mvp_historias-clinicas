@@ -1,5 +1,5 @@
 // * Recuperar contraseña (flujo en 2 pasos)
-// * Paso 1: solicitar código; Paso 2: restablecer con código recibido (en demo, ver consola server).
+// * Paso 1: solicitar código; Paso 2: restablecer con código recibido (el código se muestra en la consola del servidor).
 
 document.addEventListener('DOMContentLoaded', () => {
   const formCodigo = document.getElementById('form-solicitar-codigo');
@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const resp = await fetch('/api/auth/recuperar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
       const result = await resp.json();
       if (resp.ok) {
-        mostrarAlerta('Código enviado (demo: ver consola del servidor)', 'success');
+        mostrarAlerta('Código enviado. Revisá la consola del servidor para el código.', 'success');
       } else {
         mostrarAlerta(result.error || 'No se pudo enviar el código', 'error');
       }

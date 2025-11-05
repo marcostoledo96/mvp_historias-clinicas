@@ -2,8 +2,8 @@ const bcrypt = require('bcryptjs');
 const Usuario = require('../models/Usuario');
 
 // Controlador: Autenticación / Perfil
-// Maneja login/logout, registro (admin), verificación y perfil + recuperación demo
-// Almacenamiento en memoria de códigos de recuperación (solo demo; no persistente)
+// Maneja login/logout, registro (admin), verificación, perfil y recuperación de contraseña
+// Almacenamiento en memoria de códigos de recuperación (sin correo; solo para entornos de prueba, no persistente)
 const codigosRecuperacion = new Map(); // email -> { codigo, expira }
 
 const authController = {
@@ -74,7 +74,7 @@ const authController = {
     }
   },
 
-  // Cerrar sesión y limpiar datos demo si corresponde
+  // Cerrar sesión
   logout: (req, res) => {
     try {
       // cookie-session: invalidar sesión

@@ -30,7 +30,7 @@ router.post('/registro',
   authController.registro
 );
 
-// * Recuperación de contraseña (flujo demo sin correo real)
+// * Recuperación de contraseña (sin envío de correo; el código se muestra en consola del servidor)
 router.post('/recuperar', authController.solicitarRecuperacion);
 router.post('/restablecer', authController.restablecerConCodigo);
 
