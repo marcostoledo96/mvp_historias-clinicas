@@ -1,4 +1,15 @@
-const bcrypt = require('bcrypt');
+let bcrypt;
+try {
+  bcrypt = require('bcrypt');
+} catch (e) {
+  try {
+    bcrypt = require('bcryptjs');
+    console.warn('Usando bcryptjs como fallback (bcrypt nativo no disponible).');
+  } catch (e2) {
+    console.error('No se pudo cargar ni bcrypt ni bcryptjs');
+    throw e;
+  }
+}
 const Usuario = require('../models/Usuario');
 
 // Controlador: Autenticación / Perfil
@@ -229,10 +240,10 @@ authController.cambiarPassword = async (req, res) => {
     const Usuario = require('../models/Usuario');
     const usuario = await Usuario.buscarConHashPorId(id);
     if (!usuario) return res.status(404).json({ error: 'Usuario no encontrado' });
-    const ok = await require('bcrypt').compare(password_actual, usuario.password_hash);
+      const ok = await bcrypt.compare(password_actual, usuario.password_hash);
     if (!ok) return res.status(400).json({ error: 'Contraseña actual incorrecta' });
     const saltRounds = 10;
-    const nuevoHash = await require('bcrypt').hash(password_nueva, saltRounds);
+    const nuevoHash = await bcrypt.hash(password_nueva, saltRounds);
     await Usuario.actualizarPassword(id, nuevoHash);
     res.json({ mensaje: 'Contraseña actualizada' });
   } catch (e) {
