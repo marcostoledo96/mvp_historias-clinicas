@@ -68,6 +68,45 @@
 
       <!-- Sección de preferencias eliminada para el MVP -->
 
+      <div id="card-admin" class="card mt-4 hidden">
+        <div class="card-header">
+          <h3 class="card-title section-title"><span class="material-symbols-outlined" aria-hidden="true">admin_panel_settings</span> Administración</h3>
+          <p class="text-gray-600">Crear nuevos usuarios (solo administradores)</p>
+        </div>
+        <div class="card-body">
+          <div class="mb-3">
+            <button id="btn-mostrar-crear-usuario" class="btn btn-success btn-field" type="button"><span class="material-symbols-outlined" aria-hidden="true">person_add</span> Crear usuario</button>
+          </div>
+          <form id="form-crear-usuario-config" class="hidden">
+            <div class="form-row">
+              <div class="form-group w-full">
+                <label class="form-label">Nombre completo</label>
+                <input name="nombre_completo" class="form-input" required />
+              </div>
+              <div class="form-group w-full">
+                <label class="form-label">Email</label>
+                <input name="email" type="email" class="form-input" required />
+              </div>
+              <div class="form-group w-full">
+                <label class="form-label">Contraseña</label>
+                <input name="password" type="password" class="form-input" required />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Rol</label>
+                <select name="rol" class="form-select">
+                  <option value="doctor">Doctor</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
+            </div>
+            <div class="card-footer">
+              <button type="button" id="btn-cancelar-crear-usuario" class="btn btn-secondary btn-field">Cancelar</button>
+              <button type="submit" id="btn-crear-usuario" class="btn btn-primary btn-field">Guardar usuario</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
     </main>
 
     <div id="footer-container"></div>

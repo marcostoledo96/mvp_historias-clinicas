@@ -1,6 +1,5 @@
 -- Scripts SQL para Sistema de Historias Clínicas Médicas
 -- Tecnologías: PostgreSQL, Node.js, Express
--- Autor: Marcos Toledo
 
 -- Crear la base de datos (ejecutar como superusuario)
 -- CREATE DATABASE historias_clinicas;

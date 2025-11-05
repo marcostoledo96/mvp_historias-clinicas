@@ -3,7 +3,7 @@
 /*
   ! Hoja de estilos principal (frontend)
   * Estándares y convenciones
-  *  - Design tokens: variables en :root y overrides en [data-theme="dark"]
+  *  - Design tokens: variables en :root
   *  - Utilidades atómicas para layout/espaciado/visibilidad
   *  - Componentes base: card, table, btn, alert, badge, fieldset
   *  - Responsive: breakpoints en 768px y 480px
@@ -11,7 +11,7 @@
   
   Índice rápido
   1) Reset y Variables (Design tokens)
-  2) Tema oscuro ([data-theme="dark"]) 
+  
   3) Base (body, icon font, títulos)
   4) Layout principal (header, nav, content)
   5) Menú de usuario
@@ -33,7 +33,7 @@
  * Hoja de estilos principal
  *
  * Convenciones:
- * - Paleta y temas: variables CSS en :root y [data-theme="dark"].
+ * - Paleta y temas: variables CSS en :root.
  * - Utilidades: clases pequeñas para layout (flex, gap, hidden, etc.).
  * - Componentes: .card, .table, .btn, .alert, .badge.
  * - Responsive: media queries a 768px y 480px para compactar.
@@ -176,16 +176,6 @@ body {
   box-shadow: var(--shadow-md);
 }
 
-[data-theme="dark"] .header {
-  background: linear-gradient(135deg, #0f172a 0%, #0b1220 100%);
-}
-
-[data-theme="dark"] .nav-link {
-  color: #e5e7eb;
-}
-
-[data-theme="dark"] .nav-link:hover { background-color: rgba(96,165,250,0.12); }
-[data-theme="dark"] .nav-link.active { background-color: rgba(96,165,250,0.20); box-shadow: inset 0 -3px 0 0 #60a5fa; }
 
 .header-container {
   max-width: 1200px;
@@ -234,7 +224,7 @@ body {
 .nav-link.active { background-color: rgba(255,255,255,0.22); }
 
 .nav-link:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(255,255,255,0.25); }
-[data-theme="dark"] .nav-link:focus-visible { box-shadow: 0 0 0 3px rgba(96,165,250,0.35); }
+
 
 /* ? .user-info eliminado por no uso (dejar referencia para futuros refactors) */
 
@@ -271,10 +261,7 @@ body {
 .dropdown-item:hover { background: var(--color-gray-100); }
 .user-info-line { padding: 10px 12px; border-bottom: 1px solid var(--color-gray-200); font-weight: 600; }
 
-/* * Dropdown en oscuro */
-[data-theme="dark"] .user-dropdown { background: var(--color-gray-100); color: var(--color-gray-800); border-color: var(--color-gray-300); }
-[data-theme="dark"] .dropdown-item:hover { background: var(--color-gray-100); }
-[data-theme="dark"] .user-info-line { background-color: var(--color-gray-200); border-color: var(--color-gray-300); }
+/* * Dropdown: estilos definidos sólo para tema claro (MVP) */
 
 /* ? Duplicado intencional de .hidden (véase más abajo en utilidades) para asegurar prioridad local */
 .hidden { display: none !important; }
@@ -288,10 +275,6 @@ body {
   margin-top: auto;
 }
 
-[data-theme="dark"] .footer {
-  background-color: #0b1220;
-  color: var(--color-gray-600);
-}
 
 .footer-container p {
   margin: var(--spacing-1) 0;
@@ -314,7 +297,6 @@ body {
 }
 
 .btn:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25); }
-[data-theme="dark"] .btn:focus-visible { box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.35); }
 
 .btn-primary {
   background-color: var(--color-primary);
@@ -335,49 +317,6 @@ body {
   background-color: var(--color-gray-300);
 }
 
-/* === Dark mode: Botones con mejor contraste y coherencia cromática === */
-[data-theme="dark"] .btn { color: #fff; }
-
-/* Primario: azul legible sobre fondos oscuros */
-[data-theme="dark"] .btn-primary { background-color: #1e40af; }
-[data-theme="dark"] .btn-primary:hover { background-color: #1e3a8a; }
-
-/* Secundario: gris azulado consistente con la paleta oscura */
-[data-theme="dark"] .btn-secondary {
-  /* Variante más oscura y con borde sutil para mejor contraste en oscuro */
-  background-color: var(--color-gray-300);
-  color: #e5e7eb;
-  border: 1px solid var(--color-gray-400);
-}
-[data-theme="dark"] .btn-secondary:hover {
-  background-color: var(--color-gray-400);
-  border-color: var(--color-gray-500);
-}
-
-/* Éxito / Error con tonos más sobrios en oscuro */
-[data-theme="dark"] .btn-success { background-color: #047857; }
-[data-theme="dark"] .btn-success:hover { background-color: #065f46; }
-
-[data-theme="dark"] .btn-error { background-color: #ef4444; }
-[data-theme="dark"] .btn-error:hover { background-color: #dc2626; }
-
-/* Outline/ghost: mantener contraste y feedback en hover */
-[data-theme="dark"] .btn-outline { color: #93c5fd; border-color: #60a5fa; }
-[data-theme="dark"] .btn-outline:hover { background: rgba(96,165,250,0.12); }
-
-[data-theme="dark"] .btn-ghost { color: #93c5fd; }
-[data-theme="dark"] .btn-ghost:hover { background: rgba(255,255,255,0.06); }
-
-/* Botón por defecto (sin variante) en oscuro: fondo/borde sutiles para mejor legibilidad */
-[data-theme="dark"] .btn:not(.btn-primary,.btn-secondary,.btn-success,.btn-error,.btn-outline,.btn-ghost) {
-  background-color: rgba(255,255,255,0.08);
-  color: #e5e7eb;
-  border: 1px solid rgba(255,255,255,0.12);
-}
-[data-theme="dark"] .btn:not(.btn-primary,.btn-secondary,.btn-success,.btn-error,.btn-outline,.btn-ghost):hover {
-  background-color: rgba(255,255,255,0.14);
-  border-color: rgba(255,255,255,0.18);
-}
 
 .btn-outline { background: transparent; color: var(--color-primary); border: 1px solid var(--color-primary); }
 .btn-outline:hover { background: rgba(37,99,235,0.08); }
@@ -451,30 +390,6 @@ textarea.form-input {
 /* Select de acciones en Turnos: letra más chica para que quepa el label completo */
 .select-accion { font-size: var(--font-size-sm); }
 
-[data-theme="dark"] .form-input,
-[data-theme="dark"] .form-select,
-[data-theme="dark"] textarea.form-input {
-  /* Fondo un poco más gris/clarito para mejorar legibilidad */
-  background-color: var(--color-gray-300);
-  color: var(--color-gray-900);
-  border-color: var(--color-gray-400);
-}
-
-/* Mejora de contraste en hover/focus en oscuro */
-[data-theme="dark"] .form-input:hover,
-[data-theme="dark"] .form-select:hover,
-[data-theme="dark"] textarea.form-input:hover { border-color: var(--color-gray-500); }
-
-[data-theme="dark"] .form-input:focus,
-[data-theme="dark"] .form-select:focus,
-[data-theme="dark"] textarea.form-input:focus {
-  border-color: #60a5fa; /* azul 400, consistente con botones */
-  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.35);
-}
-
-/* Placeholders más visibles en oscuro */
-[data-theme="dark"] .form-input::placeholder,
-[data-theme="dark"] textarea.form-input::placeholder { color: var(--color-gray-600); }
 
 .form-input:focus,
 .form-select:focus {
@@ -540,19 +455,12 @@ textarea.form-input {
   margin-bottom: var(--spacing-4);
 }
 
-[data-theme="dark"] .fieldset {
-  border-color: var(--color-gray-300);
-}
-
 .fieldset-legend {
   font-weight: 600;
   color: var(--color-gray-700);
   padding: 0 var(--spacing-2);
 }
 
-[data-theme="dark"] .fieldset-legend {
-  color: var(--color-gray-700);
-}
 
 /* ! 9) Cards */
 .card {
@@ -565,21 +473,10 @@ textarea.form-input {
 
 .card:hover { box-shadow: var(--shadow-md); transition: box-shadow .2s; }
 
-[data-theme="dark"] .card {
-  background-color: var(--color-gray-100);
-  border-color: var(--color-gray-300);
-}
-
 .card-header {
   padding: calc(var(--spacing-5) + 2px);
   border-bottom: 1px solid var(--color-gray-200);
   background-color: var(--color-gray-50);
-}
-
-[data-theme="dark"] .card-header,
-[data-theme="dark"] .card-footer {
-  background-color: var(--color-gray-200);
-  border-color: var(--color-gray-300);
 }
 
 .card-title {
@@ -624,10 +521,6 @@ textarea.form-input {
   background-color: var(--color-white);
 }
 
-[data-theme="dark"] .table {
-  background-color: var(--color-gray-100);
-}
-
 .table th,
 .table td {
   padding: var(--spacing-3) var(--spacing-4);
@@ -649,24 +542,6 @@ textarea.form-input {
 
 .table tbody tr:nth-child(odd) { background-color: rgba(0,0,0,0.03); }
 .table tbody tr:nth-child(odd):hover { background-color: var(--color-gray-50); }
-
-[data-theme="dark"] .table tbody tr:nth-child(odd) { background-color: rgba(255,255,255,0.03); }
-[data-theme="dark"] .table tbody tr:nth-child(odd):hover { background-color: var(--color-gray-100); }
-
-[data-theme="dark"] .table,
-[data-theme="dark"] .table th,
-[data-theme="dark"] .table td {
-  border-color: var(--color-gray-300);
-}
-
-[data-theme="dark"] .table th {
-  background-color: var(--color-gray-200);
-  color: var(--color-gray-700);
-}
-
-[data-theme="dark"] .table tbody tr:hover {
-  background-color: var(--color-gray-200);
-}
 
 /* ! 11) Alertas */
 .alert {
@@ -691,26 +566,6 @@ textarea.form-input {
 /* fin de alertas */
 
 /* .flex-col eliminado por no uso */
-[data-theme="dark"] .alert-success {
-  background-color: #064e3b;
-  border-color: #065f46;
-  color: #d1fae5;
-}
-[data-theme="dark"] .alert-error {
-  background-color: #7f1d1d;
-  border-color: #991b1b;
-  color: #fee2e2;
-}
-[data-theme="dark"] .alert-warning {
-  background-color: #78350f;
-  border-color: #92400e;
-  color: #fde68a;
-}
-[data-theme="dark"] .alert-info {
-  background-color: #0c4a6e;
-  border-color: #075985;
-  color: #dbeafe;
-}
 
 /* ! 12) Badges */
 .badge {
@@ -758,10 +613,6 @@ textarea.form-input {
 
 .badge-primary { background-color: #dbeafe; color: #1e40af; }
 
-[data-theme="dark"] .badge-secondary {
-  background-color: var(--color-gray-300);
-  color: var(--color-gray-800);
-}
 
 /* ! 13) Utilidades generales */
 .text-center { text-align: center; }
@@ -811,13 +662,6 @@ textarea.form-input {
 .item-sugerencia { display:flex; justify-content:space-between; padding:8px; cursor:pointer; }
 .item-sugerencia:hover { background: var(--color-gray-100); }
 
-/* Variante en oscuro para panel de sugerencias */
-[data-theme="dark"] .suggestion-panel {
-  background: var(--color-gray-300);
-  color: var(--color-gray-900);
-  border-color: var(--color-gray-400);
-}
-[data-theme="dark"] .item-sugerencia:hover { background: var(--color-gray-200); }
 
 /* * Visibilidad (nota: también se define .hidden arriba con !important) */
 .hidden { display: none; }
@@ -848,7 +692,7 @@ textarea.form-input {
 
 /* * Spinner: variantes según tema/contexto */
 .btn .loading { border-color: rgba(255,255,255,0.35); border-top-color: #fff; }
-[data-theme="dark"] .btn .loading { border-color: rgba(255,255,255,0.25); border-top-color: #fff; }
+
 
 @keyframes spin {
   to { transform: rotate(360deg); }
@@ -914,10 +758,7 @@ textarea.form-input {
   background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
 }
 
-/* Dark mode: login con fondo oscuro y tarjeta legible */
-[data-theme="dark"] .login-container {
-  background: linear-gradient(135deg, #0f172a 0%, #0b1220 100%);
-}
+/* Login: estilos en tema claro (MVP) */
 
 .login-card {
   background: var(--color-white);
@@ -928,33 +769,13 @@ textarea.form-input {
   max-width: 400px;
 }
 
-[data-theme="dark"] .login-card {
-  background: var(--color-gray-100);
-  color: var(--color-gray-800);
-  border: 1px solid var(--color-gray-300);
-  box-shadow: var(--shadow-md);
-}
+/* Overrides reducidos a tema claro */
 
 .login-header { text-align: center; margin-bottom: var(--spacing-8); }
 .login-header h1 { color: var(--color-primary); font-size: var(--font-size-3xl); margin-bottom: var(--spacing-2); }
 .login-header p { color: var(--color-gray-600); }
-[data-theme="dark"] .login-header p { color: var(--color-gray-700); }
 .login-remember { display:flex; align-items:center; gap:8px; }
 .btn-inline { display:flex; align-items:center; justify-content:center; gap:8px; }
 .login-help { margin-top: var(--spacing-6); text-align: center; color: var(--color-gray-500); font-size: var(--font-size-sm); }
 .login-help .links { margin-top: var(--spacing-4); }
-/* Toggle de tema cuando no hay header (login/recuperar/registro) */
-.theme-standalone-btn {
-  position: fixed; top: 12px; right: 12px; z-index: 1100;
-  width: 36px; height: 36px; border-radius: 18px;
-  display: inline-flex; align-items: center; justify-content: center;
-  background: var(--color-gray-50); color: var(--color-gray-800);
-  border: 1px solid var(--color-gray-200); cursor: pointer;
-  box-shadow: var(--shadow-sm);
-}
-.theme-standalone-btn:hover { box-shadow: var(--shadow-md); }
-.theme-standalone-btn:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(96,165,250,0.35); }
-[data-theme="dark"] .theme-standalone-btn {
-  background: var(--color-gray-200); color: var(--color-gray-800);
-  border-color: var(--color-gray-300);
-}
+/* Toggle de tema eliminado (MVP): reglas removidas */

@@ -4,7 +4,6 @@
 const express = require('express');
 const cors = require('cors');
 const session = require('express-session');
-const pgSession = require('connect-pg-simple')(session);
 const path = require('path');
 const { exec } = require('child_process');
 require('dotenv').config();
@@ -52,13 +51,8 @@ app.options('*', cors({ origin: corsOrigin, credentials: true }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Sesiones: usar Postgres (válido para serverless)
+// Sesiones: MemoryStore (simple para desarrollo)
 app.use(session({
-  store: new pgSession({
-    pool,
-    tableName: 'session',
-    createTableIfMissing: true,
-  }),
   secret: process.env.SESSION_SECRET || 'historias_clinicas_secret',
   resave: false,
   saveUninitialized: false,
@@ -71,6 +65,16 @@ app.use(session({
 
 // Archivos estáticos del frontend
 app.use(express.static(path.join(__dirname, '../frontend')));
+
+// Redirección amable para ruta obsoleta de registro
+app.get('/registro.html', (req, res) => {
+  const rol = req.session?.usuario?.rol;
+  if (rol === 'admin') {
+    return res.redirect('/configuracion.html');
+  }
+  // No admin o no autenticado: volver al login
+  return res.redirect('/index.html');
+});
 
 // Rutas
 const authRoutes = require('./routes/auth');

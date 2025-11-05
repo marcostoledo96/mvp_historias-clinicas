@@ -8,8 +8,9 @@
 document.addEventListener('DOMContentLoaded', async () => {
   const acceso = await inicializarPagina();
   if (!acceso) return;
-  cargarPerfil();
+  await cargarPerfil();
   configurarFormularios();
+  prepararAdmin();
 });
 
 async function cargarPerfil() {
@@ -20,6 +21,8 @@ async function cargarPerfil() {
     const form = document.getElementById('form-perfil');
     form.nombre.value = data.nombre || '';
     form.email.value = data.email || '';
+    // Guardar rol en dataset para control de UI admin
+    document.body.dataset.rol = data.rol || '';
   } catch (e) { manejarErrorAPI(e); }
 }
 
@@ -71,4 +74,51 @@ function configurarFormularios() {
   });
 
   // Sección de preferencias eliminada (MVP)
+}
+
+function prepararAdmin() {
+  const rol = document.body.dataset.rol;
+  const cardAdmin = document.getElementById('card-admin');
+  if (rol !== 'admin') {
+    if (cardAdmin) cardAdmin.classList.add('hidden');
+    return;
+  }
+  // Mostrar card para admin
+  cardAdmin.classList.remove('hidden');
+
+  const btnMostrar = document.getElementById('btn-mostrar-crear-usuario');
+  const formCrear = document.getElementById('form-crear-usuario-config');
+  const btnCancelar = document.getElementById('btn-cancelar-crear-usuario');
+
+  btnMostrar.addEventListener('click', () => {
+    formCrear.classList.toggle('hidden');
+  });
+  btnCancelar.addEventListener('click', () => {
+    formCrear.classList.add('hidden');
+    formCrear.reset();
+  });
+
+  formCrear.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const data = Object.fromEntries(new FormData(formCrear).entries());
+    try {
+      setButtonLoading('btn-crear-usuario', true);
+      const resp = await fetch('/api/auth/registro', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(data)
+      });
+      const result = await resp.json();
+      if (resp.ok) {
+        mostrarAlerta('Usuario creado exitosamente', 'success');
+        formCrear.reset();
+        formCrear.classList.add('hidden');
+      } else {
+        manejarErrorAPI(result, resp);
+        mostrarAlerta(result.error || 'No se pudo crear el usuario', 'error');
+      }
+    } catch (e) { manejarErrorAPI(e); }
+    finally { setButtonLoading('btn-crear-usuario', false); }
+  });
 }
