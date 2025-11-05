@@ -5,7 +5,7 @@
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Compatible-blue)
 ![Vercel](https://img.shields.io/badge/Deploy-Vercel-black)
 
-Sistema web completo que desarrollé para gestión de historias clínicas médicas. Backend en Node.js/Express con PostgreSQL y frontend en HTML/CSS/JavaScript vanilla.
+Sistema web completo que nuestro equipo desarrolló para gestión de historias clínicas médicas. Backend en Node.js/Express con PostgreSQL y frontend en HTML/CSS/JavaScript vanilla.
 
 ## 🌐 Demo en Vivo
 
@@ -15,7 +15,7 @@ Sistema web completo que desarrollé para gestión de historias clínicas médic
 - Usuario: `demo@historias.com` / `demo123`
 - Admin: `admin@historias.com` / `admin123`
 
-## ✨ Características que implementé
+## ✨ Características que implementamos
 
 - 🔐 **Autenticación segura** con sesiones
 - 👥 **Gestión completa de pacientes** 
@@ -222,6 +222,12 @@ Turnos
 - Puerto 3000 ocupado: usa `netstat -ano | findstr :3000` y `Stop-Process -Id <PID> -Force` en PowerShell.
 - SSL/Supabase: si tu proveedor obliga SSL sin CA, está soportado con `PGSSLMODE=no-verify` o `NO_SSL=true` (evitar en prod).
 - Usuario demo: ejecuta `node scripts\check_seed.js` si no puedes entrar con el usuario de pruebas.
+
+## Equipo de Desarrollo
+
+- Toledo Marcos
+- Miszel Veronica
+- Marcos Buono
 
 ## Licencia
 

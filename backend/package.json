@@ -1,7 +1,7 @@
 {
   "name": "sistema-historias-clinicas",
   "version": "1.0.0",
-  "description": "Sistema de Historias Clínicas Médicas que desarrollé para doctores",
+  "description": "Sistema de Historias Clínicas Médicas que nuestro equipo desarrolló para doctores",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -24,7 +24,7 @@
     "postgresql",
     "express"
   ],
-  "author": "Marcos Toledo",
+  "author": "Toledo Marcos, Miszel Veronica y Marcos Buono",
   "license": "MIT",
   "dependencies": {
     "bcrypt": "^5.1.1",
