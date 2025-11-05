@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Sistema de Historias Clínicas</title>
+            <link rel="icon" href="img/historial.ico" sizes="any">
+            <link rel="icon" type="image/png" href="img/historial.png">
     <link rel="stylesheet" href="css/styles.css">
         <!--
             ! Página: Login
@@ -108,9 +110,15 @@
                     credentials: 'include',
                     body: JSON.stringify(loginData)
                 });
-                
-                const result = await response.json();
-                
+                // Intentar parsear JSON; si falla (p.ej. HTML de error 500), caer a texto
+                let result;
+                try {
+                    result = await response.json();
+                } catch (_) {
+                    const txt = await response.text();
+                    result = { error: txt?.slice(0, 200) || 'Error desconocido' };
+                }
+
                 if (response.ok) {
                     mostrarAlerta('Login exitoso. Redirigiendo...', 'success');
                     setTimeout(() => {

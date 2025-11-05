@@ -67,26 +67,7 @@ pool.on('error', (err) => {
   }
 });
 
-// ? Probar la conexión al iniciar (log no bloqueante)
-pool
-  .connect()
-  .then((client) => {
-    console.log('✅ Conectado a PostgreSQL exitosamente');
-    client.release();
-  })
-  .catch((err) => {
-    try {
-      const safe = {
-        host: baseConfig.host,
-        port: baseConfig.port,
-        database: baseConfig.database,
-        user: baseConfig.user ? baseConfig.user.replace(/.*/,'***') : undefined, // no exponer
-        ssl: sslConfig ? { require: sslConfig.require, rejectUnauthorized: sslConfig.rejectUnauthorized } : false,
-      };
-      console.error('❌ Error conectando a PostgreSQL:', err.message, '\nDetalles:', safe);
-    } catch (_) {
-      console.error('❌ Error conectando a PostgreSQL:', err.message);
-    }
-  });
+// Nota: No probamos la conexión al importar el módulo para evitar latencias/errores
+// en entornos serverless (Vercel). El Pool se encargará de abrir conexiones bajo demanda.
 
 module.exports = pool;

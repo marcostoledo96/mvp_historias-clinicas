@@ -1,15 +1,4 @@
-let bcrypt;
-try {
-  bcrypt = require('bcrypt');
-} catch (e) {
-  try {
-    bcrypt = require('bcryptjs');
-    console.warn('Usando bcryptjs como fallback (bcrypt nativo no disponible).');
-  } catch (e2) {
-    console.error('No se pudo cargar ni bcrypt ni bcryptjs');
-    throw e;
-  }
-}
+const bcrypt = require('bcryptjs');
 const Usuario = require('../models/Usuario');
 
 // Controlador: Autenticación / Perfil
@@ -41,7 +30,7 @@ const authController = {
 
       // Verificar contraseña
       console.log('Verifying password');
-      const passwordValido = await bcrypt.compare(password, usuario.password_hash);
+  const passwordValido = await bcrypt.compare(password, usuario.password_hash);
       if (!passwordValido) {
         console.log('Invalid password');
         return res.status(401).json({ error: 'Credenciales inválidas' });
@@ -126,7 +115,7 @@ const authController = {
 
       // Hash de la contraseña
       const saltRounds = 10;
-      const passwordHash = await bcrypt.hash(password, saltRounds);
+  const passwordHash = await bcrypt.hash(password, saltRounds);
 
       // Crear usuario
       const nuevoUsuario = await Usuario.crear(email, nombre_completo, passwordHash, rol);
@@ -182,7 +171,7 @@ authController.restablecerConCodigo = async (req, res) => {
     if (!usuario) return res.status(404).json({ error: 'Usuario no encontrado' });
 
     const saltRounds = 10;
-    const passwordHash = await bcrypt.hash(password, saltRounds);
+  const passwordHash = await bcrypt.hash(password, saltRounds);
     // Actualizar password
     const pool = require('../db/connection');
     await pool.query('UPDATE usuarios SET password_hash=$1 WHERE id_usuario=$2', [passwordHash, usuario.id_usuario]);
@@ -240,10 +229,10 @@ authController.cambiarPassword = async (req, res) => {
     const Usuario = require('../models/Usuario');
     const usuario = await Usuario.buscarConHashPorId(id);
     if (!usuario) return res.status(404).json({ error: 'Usuario no encontrado' });
-      const ok = await bcrypt.compare(password_actual, usuario.password_hash);
+  const ok = await bcrypt.compare(password_actual, usuario.password_hash);
     if (!ok) return res.status(400).json({ error: 'Contraseña actual incorrecta' });
     const saltRounds = 10;
-    const nuevoHash = await bcrypt.hash(password_nueva, saltRounds);
+  const nuevoHash = await bcrypt.hash(password_nueva, saltRounds);
     await Usuario.actualizarPassword(id, nuevoHash);
     res.json({ mensaje: 'Contraseña actualizada' });
   } catch (e) {

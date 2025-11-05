@@ -8,8 +8,9 @@ const path = require('path');
 const { exec } = require('child_process');
 require('dotenv').config();
 
-// Pool de Postgres (carga .env desde backend/.env)
-const pool = require('./db/connection');
+// Nota: No importamos la conexión a Postgres aquí para evitar fallos en entornos
+// serverless (Vercel) cuando sólo se sirven estáticos o health checks.
+// Los módulos que requieren DB deben importar './db/connection' localmente.
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -66,6 +67,16 @@ app.use(session({
 // Archivos estáticos del frontend
 app.use(express.static(path.join(__dirname, '../frontend')));
 
+// Favicon
+app.get('/favicon.ico', (req, res) => {
+  res.sendFile(path.join(__dirname, '../frontend/img/historial.ico'));
+});
+
+// Salud (ubicado temprano para evitar cargar módulos pesados en health checks)
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString(), env: process.env.NODE_ENV, vercel: !!process.env.VERCEL });
+});
+
 // Redirección amable para ruta obsoleta de registro
 app.get('/registro.html', (req, res) => {
   const rol = req.session?.usuario?.rol;
@@ -93,10 +104,7 @@ app.use('/api/pacientes', pacientesRoutes);
 app.use('/api/consultas', consultasRoutes);
 // Endpoints de Turnos deshabilitados para MVP (frontend ya no los usa)
 
-// Salud
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString(), env: process.env.NODE_ENV, vercel: !!process.env.VERCEL });
-});
+// Salud (definida también arriba)
 
 // Raíz: login (ya no hay inicio.html)
 app.get('/', (req, res) => {

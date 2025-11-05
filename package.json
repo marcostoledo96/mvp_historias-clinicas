@@ -5,7 +5,6 @@
   "description": "Frontend static + Express API on Vercel",
   "engines": { "node": "22.x" },
   "dependencies": {
-    "bcrypt": "^5.1.1",
     "bcryptjs": "^2.4.3",
     "connect-pg-simple": "^9.0.0",
     "cors": "^2.8.5",
