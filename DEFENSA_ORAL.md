@@ -1,383 +1,503 @@
-# Guía para la Defensa Oral del Proyecto
+# Guía para la defensa oral del proyecto
 
-Este documento lo escribí para tener claro qué decir en la defensa. Es un resumen de cómo está organizado todo y cómo funciona el sistema.
+Este documento lo armé para tener claro qué decir en la defensa. La idea es poder contar, de forma ordenada y en mis palabras, cómo está armado el sistema, cómo lo relaciono con las consignas del trabajo práctico, con las historias de usuario y con los diagramas UML que hice en `/docs`.
 
-## Información del Proyecto
+---
 
-**Título:** Sistema de Gestión de Historias Clínicas - MVP
+## 1. Información general del proyecto
 
-**Equipo:**
+**Título del proyecto:** Sistema de Gestión de Historias Clínicas – MVP  
+**Tipo de trabajo:** Trabajo práctico integrador (aplicación web full‑stack)  
+
+**Equipo de desarrollo:**
 - Toledo Marcos
-- Miszel Veronica
+- Miszel Verónica
 - Buono Marcos
 
-**Tecnologías:** Node.js, Express, PostgreSQL (Neon), HTML/CSS/JavaScript vanilla
+**Tecnologías principales:**
+- Backend: Node.js, Express, cookie‑session, bcrypt, pg
+- Base de datos: PostgreSQL en la nube (Neon)
+- Frontend: HTML5, CSS3 y JavaScript vanilla (sin frameworks)
+- Deploy: Vercel (frontend estático + funciones serverless para la API)
+
+**Repositorio del proyecto:**  
+`github.com/marcostoledo96/mvp_historias-clinicas`
 
 ---
 
-## Estructura del Proyecto (Para explicar en la presentación)
+## 2. Relación con la consigna del TP
 
-Cuando nos pregunten cómo organizamos el código, podemos mostrar esto:
+En el archivo `TP.md` tengo la consigna original del trabajo (sistema de historias clínicas). A partir de esa consigna, nosotros nos propusimos este alcance concreto para el MVP:
 
-```
+- Que un profesional médico pueda:
+  - Iniciar sesión de forma segura.
+  - Gestionar pacientes (crear, buscar, editar y dar de baja).
+  - Registrar y consultar la historia clínica de cada paciente (consultas médicas).
+  - Recuperar su contraseña sin depender de correo electrónico, usando una pregunta secreta.
+- Que la información quede persistida en una base de datos relacional.
+- Que el sistema pueda crecer más adelante con un módulo de turnos (que dejamos preparado como **funcionalidad futura**).
+- Que la arquitectura y los principales flujos estén documentados con diagramas UML (casos de uso / secuencia / arquitectura) en la carpeta `docs/`.
+
+En la defensa yo puedo explicarlo así:
+
+> _“La consigna nos pedía un sistema de historias clínicas. Nosotros lo bajamos a un MVP realista: login seguro, gestión de pacientes, registro de consultas, recuperación de contraseña y un diseño preparado para turnos y futuras extensiones. Todo eso está soportado por una base de datos en PostgreSQL y documentado con diagramas UML en la carpeta `docs`.”_
+
+---
+
+## 3. Historias de usuario y alcance funcional
+
+Antes de ponernos a programar, lo que hicimos fue escribir historias de usuario (archivo `HU.md` y PDF `docs/Historias_usuarios.pdf`). Las principales que guiaron el diseño son:
+
+- **HU1 – Autenticación del profesional**  
+  _“Como médico quiero iniciar sesión con mi usuario y contraseña para acceder a mis pacientes y consultas.”_
+
+- **HU2 – Gestión de pacientes**  
+  _“Como médico quiero registrar los datos personales y de cobertura de mis pacientes para poder consultarlos fácilmente.”_
+
+- **HU3 – Historia clínica (consultas)**  
+  _“Como médico quiero registrar las consultas de cada paciente para tener su historia clínica completa en un solo lugar.”_
+
+- **HU4 – Recuperación de contraseña**  
+  _“Como médico quiero poder recuperar mi contraseña de forma segura para no perder acceso al sistema.”_
+
+- **HU5 – Turnos del día (futuro)**  
+  _“Como médico quiero ver y administrar mis turnos del día para organizar mi agenda.”_
+
+- **HU6 – Perfil del usuario**  
+  _“Como médico quiero actualizar mis datos personales y contraseña para mantener mi cuenta al día.”_
+
+Con esas historias definimos el alcance del MVP:
+
+- Lo que está **totalmente implementado**: autenticación, gestión de pacientes, registro de consultas, perfil de usuario y recuperación de contraseña.
+- Lo que está **diseñado pero no terminado en UI**: módulo de turnos. El backend (rutas, modelos y controladores) existe, y en los diagramas UML lo marcamos como **“FUNCIONALIDAD FUTURA”**.
+
+En la defensa yo puedo decir:
+
+> _“A partir de la consigna, primero escribimos historias de usuario. Cada pantalla y cada endpoint del sistema responde a una de esas historias. Los diagramas `.puml` en la carpeta `docs` representan justamente esos flujos.”_
+
+---
+
+## 4. Arquitectura general del sistema
+
+Para explicar la arquitectura, uso el diagrama `docs/Arquitectura.puml` como soporte visual. A grandes rasgos, el sistema se divide en tres partes:
+
+### 4.1. Frontend (cliente web)
+
+- HTML + CSS + JavaScript vanilla.
+- Páginas principales:
+  - `index.html` → login
+  - `inicio.html` → búsqueda rápida tras el login
+  - `pacientes.html` / `paciente_crear.html` / `perfil_paciente.html` → módulo de pacientes
+  - `consultas.html` / `consulta.html` → módulo de consultas
+  - `configuracion.html` → perfil del usuario + pregunta secreta
+  - `recuperar.html` → recuperación de contraseña
+- JavaScript organizado por página (`frontend/js`) más utilidades:
+  - `auth.js` → verifica la sesión en el frontend.
+  - `utils.js` → funciones auxiliares (fetch, manejo de errores, etc.).
+  - `components.js` → header y footer reutilizables.
+- El frontend se comunica con el backend usando `fetch` hacia la API REST (`/api/...`).
+
+### 4.2. Backend (API REST en Node.js / Express)
+
+Toda la parte de servidor está en `backend/`:
+
+- `server.js`  
+  Configura Express, CORS con credenciales, sesiones basadas en cookies, rutas de la API y servicio de archivos estáticos del frontend. Además está preparado para correr tanto localmente como en Vercel (modo serverless).
+
+- Carpetas principales:
+  - `routes/` → define los endpoints HTTP:
+    - `auth.js` (login, logout, perfil, pregunta secreta, recuperación)
+    - `pacientes.js` (CRUD de pacientes)
+    - `consultas.js` (CRUD de consultas)
+    - `turnos.js` (endpoints listos pero no usados en el MVP)
+  - `controllers/` → lógica de negocio:
+    - `authController.js`
+    - `pacientesController.js`
+    - `consultasController.js`
+    - `turnosController.js`
+  - `models/` → acceso a la base de datos (Active Record con `pg`):
+    - `Usuario.js`
+    - `Paciente.js`
+    - `Consulta.js`
+    - `Turno.js`
+  - `middlewares/` → funciones que se ejecutan antes de las rutas:
+    - `auth.js` (verificar sesión, rol admin, logging y validación de campos).
+  - `db/connection.js` → conexión a PostgreSQL usando pool.
+  - `scripts/` → utilidades:
+    - `create_admin.js` (crear un usuario administrador desde terminal).
+    - `check_seed.js` (verificar datos de prueba).
+
+La organización que explico al profesor es: **Rutas → Middlewares → Controladores → Modelos → Base de datos**.
+
+### 4.3. Base de datos (PostgreSQL en Neon)
+
+La estructura base está en `database/scripts.sql` y luego se complementa con migraciones en `database/migrations/`.
+
+Tablas principales:
+
+- `usuarios`  
+  - Guarda credenciales (email, password_hash, rol), fecha de registro, estado `activo`.  
+  - Tiene campos añadidos por migraciones, como la pregunta y respuesta secreta para recuperación.
+
+- `pacientes`  
+  - Contiene todos los datos personales y de cobertura del paciente.  
+  - Tiene una relación fuerte con `usuarios` vía `id_usuario`:  
+    cada médico solo ve los pacientes que él mismo creó (esto implementa **multitenancy por usuario**).
+  - Campo `activo` para hacer **soft delete** (no borramos definitivamente).
+
+- `consultas`  
+  - Representa cada entrada de la historia clínica.  
+  - Relacionada con `usuarios` (quién atendió) y `pacientes` (a quién se atendió).  
+  - Incluye motivo de consulta, diagnóstico, tratamiento, estudios, etc.
+
+- `turnos`  
+  - Estructura pensada para el módulo de turnos (día, horario, situación, etc.).  
+  - Ya está lista a nivel de base de datos y API, aunque la interfaz del MVP no la usa todavía.
+
+También hay índices para rendimiento y triggers para actualizar automáticamente `fecha_modificacion` en consultas y turnos.
+
+---
+
+## 5. Estructura del proyecto (para mostrar en la defensa)
+
+Si el profesor me pregunta cómo organicé el código, puedo resumir así:
+
+```text
 Historias_clinicas/
-│
-├── backend/                    # Todo el servidor
-│   ├── server.js              # Punto de entrada, acá arranca Express
-│   ├── db/
-│   │   └── connection.js      # Conexión a PostgreSQL con pool
-│   ├── routes/                # Definimos los endpoints de la API
-│   │   ├── auth.js            # Login, logout, recuperar contraseña
-│   │   ├── pacientes.js       # CRUD de pacientes
-│   │   ├── consultas.js       # CRUD de consultas (historias clínicas)
-│   │   └── turnos.js          # CRUD de turnos (futuro)
-│   ├── controllers/           # Lógica de negocio
-│   │   ├── authController.js
-│   │   ├── pacientesController.js
-│   │   ├── consultasController.js
-│   │   └── turnosController.js
-│   ├── models/                # Acceso directo a la base de datos
-│   │   ├── Usuario.js
-│   │   ├── Paciente.js
-│   │   ├── Consulta.js
-│   │   └── Turno.js
-│   ├── middlewares/           # Funciones que se ejecutan antes de las rutas
-│   │   └── auth.js            # Verificar que el usuario esté logueado
-│   └── scripts/               # Utilidades
-│       ├── create_admin.js    # Crear usuarios admin
-│       └── check_seed.js      # Verificar datos de prueba
-│
-├── frontend/                   # Todo lo visual
-│   ├── index.html             # Pantalla de login
-│   ├── inicio.html            # Inicio (búsqueda rápida tras el login)
-│   ├── pacientes.html         # Lista de pacientes
-│   ├── paciente_crear.html    # Formulario para nuevo paciente
-│   ├── perfil_paciente.html   # Ficha completa del paciente
-│   ├── consultas.html         # Historial de consultas
-│   ├── consulta.html          # Ver/editar una consulta
-│   ├── configuracion.html     # Perfil del usuario
-│   ├── recuperar.html         # Recuperar contraseña
-│   ├── js/                    # JavaScript por página
-│   │   ├── auth.js            # Verificar sesión en el frontend
-│   │   ├── utils.js           # Funciones reutilizables
-│   │   └── components.js      # Header y footer compartidos
-│   └── css/
-│       └── styles.css         # Todos los estilos
-│
-├── database/                   # Scripts de base de datos
-│   ├── scripts.sql            # Crear las tablas
-│   ├── seeds.sql              # Datos de ejemplo
-│   └── migrations/            # Cambios incrementales
-│
-└── docs/                       # Diagramas de flujos (PlantUML)
-    ├── 01_login.puml
-    ├── 02_recuperar_contrasena.puml
-    └── ... (18 diagramas en total)
+  backend/              # Backend Node.js/Express
+    server.js           # Servidor principal
+    db/connection.js    # Conexión a PostgreSQL
+    routes/             # Endpoints de la API
+    controllers/        # Lógica de negocio
+    models/             # Acceso a la base de datos
+    middlewares/        # Autenticación, validación, logging
+    scripts/            # Scripts auxiliares (admin, seeds)
+
+  frontend/             # Interfaz web
+    *.html              # Pantallas del sistema
+    js/                 # Lógica de frontend
+    css/styles.css      # Estilos
+
+  database/             # Base de datos
+    scripts.sql         # Esquema inicial
+    seeds.sql           # Datos de ejemplo
+    migrations/         # Cambios incrementales
+
+  docs/                 # Diagramas PlantUML y PDFs
+    01_login.puml
+    ...
+    18_perfil_usuario.puml
+    Arquitectura.puml
+    Historias_usuarios.pdf
 ```
 
 ---
 
-## Flujo General del Sistema (Para explicar verbalmente)
+## 6. Flujo general del sistema (para explicar de corrido)
 
-### 1. Inicio del Sistema
+### 6.1. Inicio del sistema
 
-"Cuando levantamos el servidor con `npm run dev`, lo que pasa es esto:"
+Cuando corro `npm run dev` dentro de `backend/`:
 
-1. **server.js** se ejecuta y crea la aplicación Express
-2. Configura las sesiones con `cookie-session` (elegimos esto en lugar de JWT porque es más simple para serverless)
-3. Conecta a PostgreSQL usando el pool de conexiones en `connection.js`
-4. Registra todas las rutas (`/api/auth/*`, `/api/pacientes/*`, etc.)
-5. Configura Express para servir los archivos estáticos del frontend
-6. El servidor escucha en el puerto 3000 (o el siguiente disponible)
+1. Se ejecuta `server.js` y se crea la aplicación Express.
+2. Se configuran CORS con credenciales y las sesiones con `cookie-session`.
+3. Se inicializan los parsers de JSON y formularios.
+4. Se registran las rutas:
+   - `/api/auth/*`
+   - `/api/pacientes/*`
+   - `/api/consultas/*`
+   - `/api/turnos/*` (preparadas para futuro).
+5. Se exponen los archivos estáticos del frontend.
+6. El servidor empieza a escuchar en el puerto 3000 (o el siguiente disponible si está ocupado).
 
-### 2. Autenticación (Login)
+### 6.2. Autenticación (login)
 
-"El flujo de login es bastante directo:"
+El flujo de login se ve en el diagrama `docs/01_login.puml` y es así:
 
-1. Usuario ingresa email y contraseña en `index.html`
-2. El frontend hace `POST /api/auth/login` con los datos
+1. El usuario ingresa email y contraseña en `index.html`.
+2. El frontend hace `POST /api/auth/login` con esos datos.
 3. En el backend:
-   - `routes/auth.js` recibe la petición
-   - Llama a `authController.login()`
-   - El controlador usa `Usuario.obtenerPorEmail()` para buscar al usuario
-   - Verifica la contraseña con `bcrypt.compare()` (hasheamos con 10 rounds)
-   - Si todo está bien, guarda el usuario en la sesión: `req.session.usuario = {...}`
-   - Envía la cookie de sesión al navegador
-4. El frontend guarda que está logueado y redirige a `inicio.html`
+   - `routes/auth.js` recibe la petición.
+   - Llama a `authController.login()`.
+   - El controlador usa `Usuario.buscarPorEmail()` para buscar al usuario.
+   - Compara la contraseña con `bcrypt.compare()` (hash con 10 rondas).
+   - Si es válida, guarda al usuario en la sesión (`req.session.usuario = {...}`).
+4. Express envía la cookie de sesión al navegador.
+5. El frontend redirige a `inicio.html` y a partir de ahí todas las pantallas usan `auth.js` para verificar que haya sesión.
 
-**Por qué usamos cookie-session:**
-- Es más simple que JWT
-- Funciona perfecto con Vercel serverless
-- No necesitamos blacklist de tokens
-- La sesión dura 7 días (30 si marcás "Recordarme")
+### 6.3. Recuperación de contraseña (pregunta secreta)
 
-### 3. Recuperación de Contraseña (Pregunta Secreta)
+El flujo está detallado en `docs/02_recuperar_contrasena.puml`:
 
-"Acá implementamos algo distinto a lo común:"
+1. En `configuracion.html` el usuario logueado configura una pregunta y respuesta secreta.
+2. El frontend envía `POST /api/auth/pregunta-secreta/configurar`.
+3. En el backend:
+   - El controlador toma la respuesta, la normaliza y la hashea con bcrypt.
+   - Guarda `pregunta_secreta` y `respuesta_secreta_hash` en la tabla `usuarios`.
+4. Para recuperar contraseña:
+   - En `recuperar.html` se ingresa el email.
+   - `POST /api/auth/pregunta-secreta/obtener` devuelve solo la pregunta.
+   - El usuario responde y propone una nueva contraseña.
+   - `POST /api/auth/recuperar` verifica la respuesta con `bcrypt.compare`.
+   - Si es correcta, se actualiza el `password_hash`.
 
-En lugar de enviar emails con códigos, usamos preguntas secretas:
+Ventajas que puedo mencionar:
 
-1. **Configurar pregunta** (en configuracion.html):
-   - Usuario logueado ingresa una pregunta y respuesta
-   - `POST /api/auth/pregunta-secreta/configurar`
-   - La respuesta se hashea con bcrypt igual que la contraseña
-   - Se guarda en la BD: `pregunta_secreta` y `respuesta_secreta_hash`
+- No dependemos de un servicio de correo.
+- La respuesta está hasheada igual que la contraseña.
+- Simple y suficiente para el alcance del MVP.
 
-2. **Recuperar contraseña** (en recuperar.html):
-   - Usuario ingresa su email
-   - `POST /api/auth/pregunta-secreta/obtener` → recibe su pregunta
-   - Usuario responde + ingresa nueva contraseña
-   - `POST /api/auth/recuperar` → verifica respuesta con bcrypt.compare
-   - Si es correcta, actualiza la contraseña
+### 6.4. Gestión de pacientes
 
-**Ventajas:**
-- No necesitamos configurar email
-- Es simple de explicar
-- Seguro (respuesta hasheada)
-- Perfecto para un MVP
+Los diagramas `04_crear_paciente.puml`, `05_editar_paciente.puml`, `06_borrar_paciente.puml` y `07_visualizar_paciente.puml` detallan cada flujo. A nivel verbal:
 
-### 4. Gestión de Pacientes
+- **Crear paciente**
+  1. El médico completa el formulario en `paciente_crear.html`.
+  2. El frontend hace `POST /api/pacientes`.
+  3. Pasa por el middleware `verificarAuth` (solo usuarios logueados).
+  4. El controlador llama a `Paciente.crear(datos, idUsuario)`.
+  5. En la BD se inserta el paciente asociado a `id_usuario` del médico.
 
-"El CRUD de pacientes tiene multitenancy integrado:"
+- **Listar / buscar pacientes**
+  - `GET /api/pacientes?buscar=...`
+  - Siempre se filtra por `id_usuario` y `activo = true`.
+  - Cada médico ve solo sus propios pacientes (**multitenancy por usuario**).
 
-**Crear paciente:**
-1. Doctor completa formulario en `paciente_crear.html`
-2. `POST /api/pacientes` con los datos
-3. El middleware `verificarAuth` verifica que haya sesión
-4. El controlador agrega automáticamente el `tenant_id` del usuario logueado
-5. Se guarda en la BD con: `INSERT INTO pacientes (..., tenant_id) VALUES (..., $tenant_id)`
+- **Editar / eliminar (soft delete)**
+  - Para editar: `PUT /api/pacientes/:id`.
+  - Para eliminar: `DELETE /api/pacientes/:id`, que en realidad marca `activo = false`.
+  - Nunca se pierde la historia clínica; las consultas siguen referenciando al paciente.
 
-**Listar pacientes:**
-- `GET /api/pacientes`
-- Siempre filtra por `WHERE tenant_id = $tenant_id`
-- Cada doctor ve solo SUS pacientes
+### 6.5. Consultas (historia clínica)
 
-**Por qué multitenancy:**
-- Cada doctor tiene sus propios datos
-- Un doctor nunca ve pacientes de otro
-- Usamos `tenant_id` en todas las tablas (pacientes, consultas, turnos)
+Los flujos se ven en `08_crear_consulta.puml`, `09_editar_consulta.puml`, `10_borrar_consulta.puml` y `11_visualizar_consulta.puml`.
 
-### 5. Consultas (Historias Clínicas)
+- Desde `perfil_paciente.html` se crea una nueva consulta (`consulta.html`).
+- El formulario envía `POST /api/consultas` con:
+  - `id_paciente`
+  - fecha y hora (o valores por defecto)
+  - motivo de consulta
+  - diagnóstico
+  - tratamiento / estudios / observaciones
+- El controlador valida que:
+  - El usuario esté logueado.
+  - El paciente pertenezca a ese usuario (multitenancy).
+- La consulta se guarda y luego se lista en el historial del paciente:
+  - `GET /api/consultas/paciente/:id_paciente` (ordenado por fecha).
 
-"Las consultas son las entradas de la historia clínica:"
+### 6.6. Turnos (módulo preparado, no MVP)
 
-1. Desde `perfil_paciente.html` → clic en "Nueva consulta"
-2. Se abre `consulta.html` con formulario
-3. `POST /api/consultas` con:
-   - id_paciente
-   - fecha
-   - motivo
-   - diagnóstico
-   - prescripciones
-   - estudios
-   - observaciones
-4. Se valida que el paciente pertenezca al tenant del doctor
-5. Se guarda la consulta
+En `12_visualizar_turnos_del_dia.puml` a `15_borrar_turno_del_dia.puml` está el diseño del módulo de turnos:
 
-**Visualizar historial:**
-- `GET /api/consultas/paciente/:id`
-- Devuelve todas las consultas ordenadas por fecha (más reciente primero)
-- Se muestran en el perfil del paciente como un timeline
+- Tablas, modelos y rutas de turnos ya creados.
+- Situaciones posibles: programado, en espera, atendido, ausente, cancelado.
+- El frontend todavía no consume estos endpoints, pero la arquitectura queda lista para agregarlo después sin romper lo ya hecho.
 
-### 6. Sistema de Turnos
-
-"Los turnos están preparados pero marcados como funcionalidad futura:"
-
-- Tenemos las rutas, modelos, controladores y vistas
-- En los diagramas UML los marcamos con banner rojo "FUNCIONALIDAD FUTURA"
-- No es prioridad del MVP pero el código está listo para extender
+En la defensa yo lo presento como **funcionalidad futura** incluida en el diseño.
 
 ---
 
-## Decisiones Técnicas Importantes (Para justificar)
+## 7. Decisiones técnicas importantes
 
-### 1. PostgreSQL en Neon
+### 7.1. PostgreSQL en Neon
 
-**Por qué:**
-- Es gratis hasta 512 MB (perfecto para MVP)
-- PostgreSQL es más robusto que SQLite para producción
-- Neon maneja backups automáticos
-- Tiene connection pooling integrado
+Elegimos PostgreSQL en Neon por:
 
-### 2. Cookie-session en lugar de JWT
+- Servicio administrado en la nube (no tengo que instalar nada local).
+- Plan gratuito suficiente para un MVP.
+- Soporte de conexión segura con `DATABASE_URL`.
+- Permite usar `pg` con pool de conexiones.
 
-**Por qué:**
-- Más simple de implementar
-- Compatible con Vercel serverless (stateless)
-- No necesitamos lógica de refresh tokens
-- No necesitamos blacklist
-- La sesión se cifra con `SESSION_SECRET`
+### 7.2. Sesiones con cookie-session en lugar de JWT
 
-### 3. Bcrypt para contraseñas
+Motivos:
 
-**Por qué:**
-- Estándar de la industria
-- Hasheamos con 10 rounds (balance entre seguridad y performance)
-- Usamos el mismo sistema para las respuestas secretas
+- Para este proyecto es más simple manejar sesiones con cookies que tokens JWT.
+- Funciona muy bien en entornos serverless como Vercel.
+- No necesitamos lógica de refresh tokens ni blacklist.
+- La cookie está cifrada con `SESSION_SECRET` y tiene control de expiración.
 
-### 4. Soft Delete en pacientes
+### 7.3. Bcrypt para contraseñas y respuestas secretas
 
-**Por qué:**
-- No perdemos datos históricos
-- Las consultas del paciente se preservan
-- Solo marcamos `activo = false`
-- Si borráramos permanentemente, perderíamos el historial
+- Bcrypt es un estándar de la industria para almacenar contraseñas.
+- Usamos 10 rondas, que es un equilibrio razonable entre seguridad y rendimiento.
+- Tanto la contraseña como la respuesta secreta se almacenan hasheadas.
 
-### 5. Frontend Vanilla (sin frameworks)
+### 7.4. Multitenancy por usuario
 
-**Por qué:**
-- Más fácil de entender el código
-- No hay complejidad extra de React/Vue
-- Carga más rápida
-- Perfecto para demostrar conocimientos fundamentales
+- En lugar de tener múltiples bases de datos, usamos una sola BD con aislamiento por `id_usuario`.
+- Tablas como `pacientes`, `consultas` y `turnos` tienen relación con `usuarios`.
+- Todas las consultas del modelo filtran por usuario, garantizando que un médico nunca vea datos de otro.
+
+### 7.5. Soft delete para pacientes
+
+- Al “eliminar” un paciente, no lo borramos físicamente.
+- Marcamos `activo = false` y dejamos intactas las consultas asociadas.
+- Esto preserva la historia clínica y facilita auditoría.
+
+### 7.6. Frontend sin frameworks
+
+- Usar JavaScript puro y HTML/CSS hace que el código sea más fácil de leer y explicar en una defensa oral.
+- El bundle es liviano, sin dependencias pesadas.
+- Para el alcance del trabajo práctico no necesitamos la complejidad de React/Vue.
 
 ---
 
-## Características de Seguridad (Para destacar)
+## 8. Características de seguridad
 
-1. **Contraseñas hasheadas:** Nunca guardamos contraseñas en texto plano
-2. **Sesiones cifradas:** La cookie se cifra con SESSION_SECRET
+Puntos para destacar al profesor:
+
+1. **Contraseñas hasheadas** con bcrypt, nunca en texto plano.
+2. **Sesiones cifradas** con `cookie-session` y `SESSION_SECRET`.
 3. **Middlewares de protección:**
-   - `verificarAuth`: Solo usuarios logueados acceden a rutas privadas
-   - `verificarAdmin`: Solo admins pueden crear usuarios
-4. **Multitenancy:** Aislamiento total de datos entre usuarios
-5. **Validación de entrada:** Verificamos campos requeridos antes de guardar
-6. **SQL con parámetros:** Usamos `$1, $2` en lugar de concatenar strings (evita SQL injection)
+   - `verificarAuth`: sólo usuarios logueados acceden a rutas privadas.
+   - `verificarAdmin`: sólo administradores pueden crear usuarios nuevos.
+4. **Multitenancy**: cada médico ve sólo sus pacientes y consultas.
+5. **Validación de entrada** en controladores y middlewares (campos requeridos).
+6. **SQL con parámetros** (`$1, $2, ...`) para evitar SQL injection.
 
 ---
 
-## Demostración en Vivo (Flujo recomendado)
+## 9. Plan de demostración en la defensa
 
-### 1. Login (2 minutos)
-- Mostrar `index.html`
-- Ingresar con `doctor@clinica.com` / `password123`
-- Explicar que verifica con bcrypt y crea sesión
-- Mostrar redirección a `inicio.html`
+Orden sugerido (aprox. 10–12 minutos):
 
-### 2. Gestión de Pacientes (3 minutos)
-- Ir a "Pacientes"
-- Crear un paciente nuevo
-- Mostrar que se guarda con el `tenant_id`
-- Buscar un paciente
-- Ver su perfil completo
+1. **Login (2 minutos)**
+   - Mostrar `index.html`.
+   - Loguearse con un usuario de prueba.
+   - Explicar brevemente cómo valida bcrypt y cómo se crea la sesión.
 
-### 3. Consultas (3 minutos)
-- Desde el perfil de un paciente, crear nueva consulta
-- Llenar motivo, diagnóstico, prescripciones
-- Guardar y mostrar que aparece en el historial
-- Editar una consulta existente
+2. **Gestión de pacientes (3 minutos)**
+   - Mostrar `pacientes.html`.
+   - Crear un paciente nuevo.
+   - Buscar por nombre o DNI.
+   - Abrir `perfil_paciente.html`.
 
-### 4. Pregunta Secreta (2 minutos)
-- Ir a Configuración
-- Configurar pregunta: "¿Nombre de tu primera mascota?" → "Firulais"
-- Cerrar sesión
-- Ir a "Recuperar contraseña"
-- Ingresar email → mostrar pregunta
-- Responder y cambiar contraseña
-- Loguearse con la nueva contraseña
+3. **Consultas (3 minutos)**
+   - Desde el perfil del paciente, crear una nueva consulta.
+   - Cargar motivo, diagnóstico y tratamiento.
+   - Guardar y ver cómo se suma al historial.
+   - Editar una consulta existente.
 
-### 5. Multitenancy (1 minuto)
-- Cerrar sesión
-- Loguearse con otro usuario
-- Mostrar que ve solo sus propios pacientes
+4. **Pregunta secreta y recuperación (2–3 minutos)**
+   - En `configuracion.html`, configurar una pregunta y respuesta secreta.
+   - Cerrar sesión.
+   - Ir a `recuperar.html`, ingresar email y responder la pregunta.
+   - Cambiar la contraseña y volver a loguearse.
+
+5. **Multitenancy (1–2 minutos)**
+   - (Opcional) mostrar con dos usuarios distintos que cada uno ve sólo sus pacientes.
+
+En todo momento puedo ir abriendo los diagramas `.puml` relevantes en VS Code para apoyar la explicación.
 
 ---
 
-## Preguntas Frecuentes que Pueden Hacer
+## 10. Código clave para mostrar si me lo piden
 
-### "¿Por qué no usaron React o Angular?"
+### 10.1. Login con bcrypt y cookie-session (`backend/controllers/authController.js`)
 
-"Preferimos JavaScript vanilla porque queríamos enfocarnos en entender bien los conceptos fundamentales sin agregar complejidad extra. Además, para un MVP, el frontend vanilla es más rápido de cargar y más fácil de mantener."
-
-### "¿Por qué cookie-session y no JWT?"
-
-"Cookie-session es más simple para arquitecturas serverless como Vercel. No necesitamos manejar refresh tokens, blacklist, ni nada complejo. La sesión se cifra automáticamente con nuestro SECRET y funciona perfecto para el alcance del proyecto."
-
-### "¿Cómo manejan la seguridad?"
-
-"Implementamos varias capas: contraseñas hasheadas con bcrypt, sesiones cifradas, middlewares que verifican autenticación, queries con parámetros para evitar SQL injection, y multitenancy que aísla completamente los datos de cada usuario."
-
-### "¿Por qué PostgreSQL en lugar de MySQL?"
-
-"PostgreSQL es más robusto para datos estructurados como historias clínicas. Además, Neon nos da hosting gratuito con backups automáticos y connection pooling, que nos facilita mucho el desarrollo."
-
-### "¿Qué falta para que sea un sistema completo?"
-
-"Para un sistema de producción faltaría: implementar completamente el módulo de turnos, agregar exportación a PDF de las historias clínicas, sistema de búsqueda avanzada, notificaciones, y un panel de estadísticas. Pero como MVP, cubre las funcionalidades core que un consultorio necesita."
-
-### "¿Probaron el sistema?"
-
-"Sí, hicimos pruebas manuales de todos los flujos: login, registro, CRUD de pacientes, CRUD de consultas, recuperación de contraseña, cambio de contraseña, y verificamos el multitenancy creando varios usuarios."
-
----
-
-## Código Importante para Mostrar
-
-### 1. authController.js - Login
 ```javascript
-// Ejemplo de cómo hasheamos y verificamos contraseñas
-const esValida = await bcrypt.compare(password, usuario.password_hash);
-if (esValida) {
-  req.session.usuario = {
-    id: usuario.id,
-    nombre: usuario.nombre,
-    email: usuario.email,
-    rol: usuario.rol,
-    tenant_id: usuario.tenant_id
-  };
+const passwordValido = await bcrypt.compare(password, usuario.password_hash);
+if (!passwordValido) {
+  return res.status(401).json({ error: 'Credenciales inválidas' });
 }
+
+req.session = req.session || {};
+req.session.usuarioId = usuario.id_usuario;
+req.session.usuario = {
+  id: usuario.id_usuario,
+  email: usuario.email,
+  nombre: usuario.nombre_completo,
+  rol: usuario.rol
+};
 ```
 
-### 2. middlewares/auth.js - Verificar sesión
+### 10.2. Middleware de autenticación (`backend/middlewares/auth.js`)
+
 ```javascript
-// Middleware que protege rutas privadas
 function verificarAuth(req, res, next) {
-  if (!req.session || !req.session.usuario) {
-    return res.status(401).json({ error: 'No autorizado' });
+  if (req.session && req.session.usuario) {
+    return next();
   }
-  next();
+  return res.status(401).json({ error: 'No autenticado. Debes iniciar sesión.' });
 }
 ```
 
-### 3. Paciente.js - Multitenancy
+### 10.3. Multitenancy en pacientes (`backend/models/Paciente.js`)
+
 ```javascript
-// Siempre filtramos por tenant_id
-static async obtenerPorUsuario(idUsuario) {
-  const query = 'SELECT * FROM pacientes WHERE tenant_id = $1 AND activo = true';
-  const { rows } = await pool.query(query, [idUsuario]);
+static async obtenerTodos(idUsuario) {
+  const query = `
+    SELECT id_paciente, nombre, apellido
+    FROM pacientes
+    WHERE activo = true AND id_usuario = $1
+    ORDER BY apellido, nombre
+  `;
+  const { rows } = await conexionBD.query(query, [idUsuario]);
   return rows;
 }
 ```
 
----
-
-## Diagramas para Mostrar
-
-Los diagramas están en `/docs/` y explican visualmente cada flujo:
-
-- **01_login.puml:** Flujo completo de autenticación
-- **02_recuperar_contrasena.puml:** Sistema de pregunta secreta
-- **04_crear_paciente.puml:** Cómo se crea un paciente con multitenancy
-- **Arquitectura.puml:** Vista general del sistema (Vercel + Neon + Frontend)
-
-Podemos abrirlos con la extensión PlantUML en VS Code durante la presentación.
+Con estos trozos de código puedo mostrar rápidamente cómo se combinan seguridad, sesiones y aislamiento por usuario.
 
 ---
 
-## Cierre de la Presentación
+## 11. Diagramas UML preparados
 
-"En resumen, desarrollamos un MVP funcional que cubre las necesidades básicas de un consultorio médico: gestión de pacientes, registro de consultas, y un sistema de autenticación seguro. Usamos tecnologías modernas como PostgreSQL en la nube, arquitectura serverless-ready, y aplicamos buenas prácticas de seguridad como multitenancy y hasheo de contraseñas. El código está completamente comentado y listo para escalar con nuevas funcionalidades."
+En la carpeta `docs/` tengo los diagramas PlantUML que respaldan la implementación. Algunos que puedo mostrar:
+
+- `01_login.puml` → flujo completo de autenticación.
+- `02_recuperar_contrasena.puml` → proceso de recuperación con pregunta secreta.
+- `04_crear_paciente.puml` → alta de paciente con relación al usuario.
+- `08_crear_consulta.puml` → creación de una consulta en la historia clínica.
+- `12_visualizar_turnos_del_dia.puml` → diseño del módulo de turnos.
+- `Arquitectura.puml` → arquitectura general (cliente, Vercel, Neon, capas del backend).
+
+Estos diagramas conectan directamente las historias de usuario con las pantallas y los endpoints de la API.
 
 ---
 
-## Contacto del Equipo
+## 12. Posibles preguntas del profesor y cómo responderlas
 
-- Toledo Marcos
-- Miszel Veronica
-- Buono Marcos
+Al final de la defensa, es probable que el profesor pregunte más en profundidad. Dejé preparadas algunas preguntas típicas con respuestas en mis palabras.
 
-**Repositorio:** github.com/marcostoledo96/mvp_historias-clinicas
+### 12.1. “¿Cómo pasaste de la consigna a las historias de usuario?”
+
+> _“Primero leí la consigna del TP y anoté qué actores aparecían (principalmente el médico) y qué acciones debía poder hacer. Con eso armé historias de usuario del estilo ‘Como médico quiero…’. Después agrupé esas historias en módulos: autenticación, pacientes, consultas, turnos y perfil. Cada módulo tiene su diagrama UML correspondiente en la carpeta `docs`. A partir de esas historias definimos las pantallas, las rutas de la API y el diseño de la base de datos.”_
+
+### 12.2. “¿Cómo refleja la base de datos esas historias de usuario?”
+
+> _“Cada historia de usuario se tradujo en una tabla o relación. Por ejemplo, la historia de registrar consultas se refleja en la tabla `consultas`, relacionada con `usuarios` y `pacientes`. La historia de gestión de pacientes se refleja en la tabla `pacientes`, que tiene un `id_usuario` para garantizar que cada médico vea sólo sus pacientes. Así, la estructura de la base de datos sigue directamente lo que pedían las historias.”_
+
+### 12.3. “¿Por qué usaste cookie-session y no JWT?”
+
+> _“Elegí `cookie-session` porque para este proyecto es más simple y encaja muy bien con Vercel serverless. No tengo que manejar tokens de refresco ni listas negras; la sesión va cifrada en la cookie con un `SESSION_SECRET` y tiene fecha de expiración. Además, desde el frontend sólo tengo que preocuparme por enviar las cookies con `credentials: 'include'` y listo.”_
+
+### 12.4. “¿Qué medidas de seguridad implementaste?”
+
+> _“A nivel seguridad implementé varias cosas: todas las contraseñas y respuestas secretas se guardan con bcrypt, nunca en texto plano; uso `cookie-session` con un secret para cifrar la cookie; tengo middlewares que revisan si el usuario está autenticado y si es admin; todas las consultas SQL usan parámetros para evitar inyección; y, por último, el diseño de multitenancy por `id_usuario` asegura que un médico no pueda ver pacientes de otro.”_
+
+### 12.5. “¿Por qué PostgreSQL y no MySQL u otra base?”
+
+> _“PostgreSQL es muy fuerte para datos estructurados y tiene buen soporte en Node con la librería `pg`. Además, Neon ofrece PostgreSQL administrado con un plan gratuito suficiente para el MVP y manejo automático de conexiones. Podría haber usado MySQL, pero ya tenía experiencia con PostgreSQL y me resultó más natural para este tipo de proyecto.”_
+
+### 12.6. “¿Qué ventajas tiene el soft delete en pacientes?”
+
+> _“La ventaja es que nunca pierdo la historia clínica. Si borrara físicamente el paciente, perdería el contexto de todas las consultas asociadas. Con el soft delete marco `activo = false`, lo excluyo de los listados normales, pero si necesito auditar o revisar algo, la información sigue estando. En un entorno médico eso es clave.”_
+
+### 12.7. “¿Qué te faltaría para llevar esto a producción real?”
+
+> _“Para un entorno de producción real agregaría: el módulo de turnos completo con UI, logs de auditoría más finos (quién modificó qué y cuándo), exportación de historias clínicas a PDF, controles de permisos más detallados por rol, tests automatizados y un sistema de backups y monitoreo más formal. Pero para el alcance de este trabajo práctico, el MVP cumple con las funcionalidades básicas que un consultorio necesita.”_
+
+### 12.8. “¿Cómo probaste el sistema?”
+
+> _“Hicimos pruebas manuales de todos los flujos principales: login, logout, cambio de contraseña, configuración y uso de la pregunta secreta, CRUD de pacientes y de consultas, y algunos escenarios de error (campos faltantes, credenciales incorrectas, usuario sin pregunta secreta configurada). La ventaja de tener los endpoints bien separados es que se pueden probar fácilmente con herramientas como Postman o con el mismo frontend.”_
+
+### 12.9. “Si mañana tuvieras que agregar otra funcionalidad, ¿cómo la incorporarías?”
+
+> _“La incorporaría siguiendo la misma estructura que ya tengo: primero escribiría la historia de usuario, luego el diagrama UML del flujo, después agregaría la tabla o columnas necesarias en la base de datos (con una nueva migración), crearía el modelo, el controlador, las rutas y finalmente las pantallas o componentes de frontend. Esa forma de trabajo hace que el código se mantenga ordenado y alineado con las historias de usuario.”_
 
 ---
 
-_Este documento fue creado como guía de estudio para la defensa oral. Repasar antes de la presentación._
+_Este documento es mi guía personal para la defensa oral. La idea es repasarlo antes de la presentación y usarlo como soporte mental para explicar el proyecto de forma clara y ordenada._
+
