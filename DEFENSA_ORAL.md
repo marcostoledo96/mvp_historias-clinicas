@@ -49,7 +49,7 @@ Historias_clinicas/
 │
 ├── frontend/                   # Todo lo visual
 │   ├── index.html             # Pantalla de login
-│   ├── inicio.html            # Dashboard después de loguearse
+│   ├── inicio.html            # Inicio (búsqueda rápida tras el login)
 │   ├── pacientes.html         # Lista de pacientes
 │   ├── paciente_crear.html    # Formulario para nuevo paciente
 │   ├── perfil_paciente.html   # Ficha completa del paciente
