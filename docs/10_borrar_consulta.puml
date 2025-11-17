@@ -8,28 +8,22 @@ participant "Sistema Web" as Web
 participant "Servidor (API REST)" as Server
 database "PostgreSQL (Neon)" as DB
 
-Doctor -> Web : Solicita eliminar consulta
-(confirmación modal)
+Doctor -> Web : Solicita eliminar consulta\n(confirmación modal)
 
 Web -> Server : DELETE /api/consultas/{id}
 
-Server -> DB : SELECT c.* FROM consultas c
-  INNER JOIN pacientes p ON c.id_paciente = p.id
-  WHERE c.id = $1 AND p.tenant_id = $2
+Server -> DB : SELECT c.* FROM consultas c\n  INNER JOIN pacientes p ON c.id_paciente = p.id\n  WHERE c.id = $1 AND p.tenant_id = $2
 DB --> Server : consulta_existente
 
 alt consulta existe en este tenant
-  Server -> DB : DELETE FROM consultas
-  WHERE id = $1
+  Server -> DB : DELETE FROM consultas\n  WHERE id = $1
   DB --> Server : OK
   
-  Server --> Web : HTTP 200 OK
-{ mensaje: "Consulta eliminada" }
+  Server --> Web : HTTP 200 OK\n{ mensaje: "Consulta eliminada" }
   Web --> Doctor : Actualiza historial del paciente
   
 else consulta no existe o no autorizado
-  Server --> Web : HTTP 404 Not Found
-{ error: "Consulta no encontrada" }
+  Server --> Web : HTTP 404 Not Found\n{ error: "Consulta no encontrada" }
   Web --> Doctor : Muestra error
 end
 

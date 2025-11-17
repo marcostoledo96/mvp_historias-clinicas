@@ -8,32 +8,22 @@ participant "Sistema Web" as Web
 participant "Servidor (API REST)" as Server
 database "PostgreSQL (Neon)" as DB
 
-Doctor -> Web : Abre consulta existente en consulta.html
-y modifica datos
+Doctor -> Web : Abre consulta existente en consulta.html\ny modifica datos
 
-Web -> Server : PUT /api/consultas/{id}
-{ fecha, motivo, diagnostico,
-  prescripciones, estudios, observaciones }
+Web -> Server : PUT /api/consultas/{id}\n{ fecha, motivo, diagnostico,\n  prescripciones, estudios, observaciones }
 
-Server -> DB : SELECT c.* FROM consultas c
-  INNER JOIN pacientes p ON c.id_paciente = p.id
-  WHERE c.id = $1 AND p.tenant_id = $2
+Server -> DB : SELECT c.* FROM consultas c\n  INNER JOIN pacientes p ON c.id_paciente = p.id\n  WHERE c.id = $1 AND p.tenant_id = $2
 DB --> Server : consulta_existente
 
 alt consulta existe en este tenant
-  Server -> DB : UPDATE consultas
-  SET fecha = $1, motivo = $2, diagnostico = $3,
-      prescripciones = $4, estudios = $5, observaciones = $6
-  WHERE id = $7
+  Server -> DB : UPDATE consultas\n  SET fecha = $1, motivo = $2, diagnostico = $3,\n      prescripciones = $4, estudios = $5, observaciones = $6\n  WHERE id = $7
   DB --> Server : OK
   
-  Server --> Web : HTTP 200 OK
-{ mensaje: "Consulta actualizada" }
+  Server --> Web : HTTP 200 OK\n{ mensaje: "Consulta actualizada" }
   Web --> Doctor : Muestra confirmación
   
 else consulta no existe o no autorizado
-  Server --> Web : HTTP 404 Not Found
-{ error: "Consulta no encontrada" }
+  Server --> Web : HTTP 404 Not Found\n{ error: "Consulta no encontrada" }
   Web --> Doctor : Muestra error
 end
 

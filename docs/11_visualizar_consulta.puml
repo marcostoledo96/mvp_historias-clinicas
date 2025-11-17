@@ -12,25 +12,15 @@ Doctor -> Web : Clic en consulta desde perfil del paciente
 
 Web -> Server : GET /api/consultas/{id}
 
-Server -> DB : SELECT c.*, p.nombre, p.apellido
-  FROM consultas c
-  INNER JOIN pacientes p ON c.id_paciente = p.id
-  WHERE c.id = $1 AND p.tenant_id = $2
+Server -> DB : SELECT c.*, p.nombre, p.apellido\n  FROM consultas c\n  INNER JOIN pacientes p ON c.id_paciente = p.id\n  WHERE c.id = $1 AND p.tenant_id = $2
 DB --> Server : datos_consulta + datos_paciente
 
 alt consulta existe en este tenant
-  Server --> Web : HTTP 200 OK
-{ consulta: {
-    id, fecha, motivo, diagnostico,
-    prescripciones, estudios, observaciones,
-    paciente: { nombre, apellido }
-  }
-}
+  Server --> Web : HTTP 200 OK\n{ consulta: {\n    id, fecha, motivo, diagnostico,\n    prescripciones, estudios, observaciones,\n    paciente: { nombre, apellido }\n  }\n}
   Web --> Doctor : Muestra consulta.html con todos los detalles
   
 else consulta no existe o no autorizado
-  Server --> Web : HTTP 404 Not Found
-{ error: "Consulta no encontrada" }
+  Server --> Web : HTTP 404 Not Found\n{ error: "Consulta no encontrada" }
   Web --> Doctor : Redirige o muestra error
 end
 

@@ -1,6 +1,8 @@
-@startuml
-title Diagrama de Arquitectura - Sistema de Historias Clínicas MVP
-subtitle Vercel Serverless + PostgreSQL (Neon) + Cookie-based Sessions
+﻿@startuml
+title
+  Diagrama de Arquitectura - Sistema de Historias Clínicas MVP
+  Vercel Serverless + PostgreSQL (Neon) + Cookie-based Sessions
+end title
 
 ' --- CLIENTE ---
 node "Cliente Web (Doctor)" {

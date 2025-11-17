@@ -1,6 +1,6 @@
 @startuml
 ' Diagrama 14 - Editar turno del día
-' ⚠️ FUNCIONALIDAD FUTURA - No implementada en el MVP actual
+' FUNCIONALIDAD FUTURA - No implementada en el MVP actual
 title 14 - Editar turno del día (FUTURO)
 
 actor Doctor
@@ -8,34 +8,22 @@ participant "Sistema Web" as Web
 participant "Servidor (API REST)" as Server
 database "PostgreSQL (Neon)" as DB
 
-note over Doctor, DB #ffcccc
-  ⚠️ **FUNCIONALIDAD FUTURA**
-  Esta característica está planificada pero no implementada en el MVP
-end note
+Doctor -> Web : Selecciona turno en turno_editar.html\ny modifica hora/estado
 
-Doctor -> Web : Selecciona turno en turno_editar.html
-y modifica hora/estado
+Web -> Server : PUT /api/turnos/{id}\n{ hora, estado, observaciones }
 
-Web -> Server : PUT /api/turnos/{id}
-{ hora, estado, observaciones }
-
-Server -> DB : SELECT * FROM turnos
-WHERE id = $1 AND tenant_id = $2
+Server -> DB : SELECT * FROM turnos\nWHERE id = $1 AND tenant_id = $2
 DB --> Server : turno_actual
 
 alt turno existe
-  Server -> DB : UPDATE turnos
-  SET hora = $1, estado = $2, observaciones = $3
-  WHERE id = $4 AND tenant_id = $5
+  Server -> DB : UPDATE turnos\n  SET hora = $1, estado = $2, observaciones = $3\n  WHERE id = $4 AND tenant_id = $5
   DB --> Server : OK
   
-  Server --> Web : HTTP 200 OK
-  { mensaje: "Turno actualizado" }
+  Server --> Web : HTTP 200 OK\n  { mensaje: "Turno actualizado" }
   Web --> Doctor : Muestra confirmación
   
 else no existe
-  Server --> Web : HTTP 404 Not Found
-  { error: "Turno no encontrado" }
+  Server --> Web : HTTP 404 Not Found\n  { error: "Turno no encontrado" }
   Web --> Doctor : Muestra error
 end
 
