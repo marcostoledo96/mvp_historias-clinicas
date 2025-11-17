@@ -128,6 +128,53 @@ class Usuario {
       throw error;
     }
   }
+
+  // * configurarPreguntaSecreta(idUsuario, pregunta, respuestaHash)
+  // > Guarda la pregunta secreta y el hash de la respuesta para recuperación de contraseña.
+  // ? pregunta: string - La pregunta que eligió el usuario
+  // ? respuestaHash: string - Hash bcrypt de la respuesta
+  // ! respuestaHash debe venir ya hasheado desde el controlador
+  static async configurarPreguntaSecreta(idUsuario, pregunta, respuestaHash) {
+    try {
+      await pool.query(
+        'UPDATE usuarios SET pregunta_secreta = $1, respuesta_secreta_hash = $2 WHERE id_usuario = $3',
+        [pregunta, respuestaHash, idUsuario]
+      );
+      return true;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  // * obtenerPreguntaSecreta(email)
+  // > Devuelve solo la pregunta secreta del usuario (sin respuesta ni hash)
+  // ? Usado en el flujo de recuperación para mostrar la pregunta al usuario
+  static async obtenerPreguntaSecreta(email) {
+    try {
+      const result = await pool.query(
+        'SELECT pregunta_secreta FROM usuarios WHERE email = $1 AND activo = true',
+        [email]
+      );
+      return result.rows[0]?.pregunta_secreta;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  // * obtenerUsuarioConRespuestaHash(email)
+  // > Devuelve el usuario completo incluyendo respuesta_secreta_hash
+  // ! Usar solo para verificar respuesta en recuperación de contraseña
+  static async obtenerUsuarioConRespuestaHash(email) {
+    try {
+      const result = await pool.query(
+        'SELECT * FROM usuarios WHERE email = $1 AND activo = true',
+        [email]
+      );
+      return result.rows[0];
+    } catch (error) {
+      throw error;
+    }
+  }
 }
 
 module.exports = Usuario;

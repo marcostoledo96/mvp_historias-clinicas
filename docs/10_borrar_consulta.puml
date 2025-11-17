@@ -1,22 +1,42 @@
 @startuml
 ' Diagrama 10 - Borrar consulta
+' Eliminar una entrada de la historia clínica
 title 10 - Borrar consulta
+
 actor Doctor
 participant "Sistema Web" as Web
 participant "Servidor (API REST)" as Server
-database "Base de Datos" as DB
+database "PostgreSQL (Neon)" as DB
 
-Doctor -> Web : Solicita eliminar consulta (confirmación)
-Web -> Server : DELETE /consultas/{id}
-Server -> DB : SELECT * FROM consultas WHERE id = ?
+Doctor -> Web : Solicita eliminar consulta
+(confirmación modal)
+
+Web -> Server : DELETE /api/consultas/{id}
+
+Server -> DB : SELECT c.* FROM consultas c
+  INNER JOIN pacientes p ON c.id_paciente = p.id
+  WHERE c.id = $1 AND p.tenant_id = $2
 DB --> Server : consulta_existente
-alt existe y puede borrarse
-  Server -> DB : DELETE FROM consultas WHERE id = ?
+
+alt consulta existe en este tenant
+  Server -> DB : DELETE FROM consultas
+  WHERE id = $1
   DB --> Server : OK
-  Server --> Web : HTTP 200 OK { mensaje: "Consulta eliminada" }
-  Web --> Doctor : Actualiza historial
-else no existe
-  Server --> Web : HTTP 404 Not Found { error: "Consulta no encontrada" }
-  Web --> Doctor : Muestra mensaje
+  
+  Server --> Web : HTTP 200 OK
+{ mensaje: "Consulta eliminada" }
+  Web --> Doctor : Actualiza historial del paciente
+  
+else consulta no existe o no autorizado
+  Server --> Web : HTTP 404 Not Found
+{ error: "Consulta no encontrada" }
+  Web --> Doctor : Muestra error
 end
+
+note over Server, DB
+  **Hard delete**: Se elimina permanentemente el registro
+  **Seguridad**: Solo se borran consultas del mismo tenant
+  **Alternativa**: Se podría implementar soft delete con campo 'activo'
+end note
+
 @enduml

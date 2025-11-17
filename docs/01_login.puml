@@ -1,26 +1,57 @@
 @startuml
 ' Diagrama 01 - Login del doctor
+' Sistema simplificado con autenticación basada en cookies de sesión
+' Base de datos: PostgreSQL en Neon
 title 01 - Login del doctor
+
 actor Doctor
 participant "Sistema Web" as Web
 participant "Servidor (API REST)" as Server
-database "Base de Datos" as DB
+database "PostgreSQL (Neon)" as DB
 
 Doctor -> Web : Ingresa email y contraseña
-Web -> Server : POST /login { email, password }
-Server -> DB : SELECT * FROM usuarios WHERE email = ?
+Web -> Server : POST /api/auth/login { email, password }
+
+note right of Server
+  // Verifico que vengan los datos requeridos
+  // Busco al usuario en la base de datos
+end note
+
+Server -> DB : SELECT * FROM usuarios\nWHERE email = $1 AND activo = true
 DB --> Server : registro_usuario
+
 alt usuario encontrado
-  Server -> Server : Verifica password (hash)
-  alt password correcto
-    Server --> Web : HTTP 200 OK { token: JWT, nombre, rol }
-  Web --> Doctor : Redirige a inicio
-  else password incorrecto
-    Server --> Web : HTTP 401 Unauthorized { error: "Credenciales inválidas" }
+  note right of Server
+    // bcrypt.compare compara el texto plano
+    // con el hash guardado en la base de datos
+  end note
+  
+  Server -> Server : bcrypt.compare(password, usuario.password_hash)
+  
+  alt contraseña correcta
+    note right of Server
+      // Creo la sesión del usuario
+      // req.session.usuario guarda id, nombre, email, rol
+      // Si marcó 'Recordarme', la sesión dura 30 días
+    end note
+    
+    Server --> Web : HTTP 200 OK\n+ Set-Cookie: session=...\n{ nombre, rol }
+    Web --> Doctor : Redirige a inicio.html
+    
+  else contraseña incorrecta
+    Server --> Web : HTTP 401 Unauthorized\n{ error: "Credenciales inválidas" }
     Web --> Doctor : Muestra mensaje de error
   end
+  
 else usuario no encontrado
-  Server --> Web : HTTP 404 Not Found { error: "Usuario no encontrado" }
+  Server --> Web : HTTP 404 Not Found\n{ error: "Usuario no encontrado" }
   Web --> Doctor : Muestra mensaje de error
 end
+
+note over Server, DB
+  **Seguridad**: Las contraseñas se guardan con bcrypt (10 rounds)
+  **Sesión**: Usamos cookie-session compatible con Vercel serverless
+  **Multitenancy**: Cada usuario pertenece a un tenant_id
+end note
+
 @enduml

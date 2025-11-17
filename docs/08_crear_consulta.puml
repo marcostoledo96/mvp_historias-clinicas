@@ -1,19 +1,44 @@
 @startuml
 ' Diagrama 08 - Crear consulta
+' Registrar nueva entrada en la historia clínica del paciente
 title 08 - Crear consulta (entrada en historia clínica)
+
 actor Doctor
 participant "Sistema Web" as Web
 participant "Servidor (API REST)" as Server
-database "Base de Datos" as DB
+database "PostgreSQL (Neon)" as DB
 
-Doctor -> Web : En ficha de paciente, hace clic "Nueva consulta"
-Web -> Server : POST /pacientes/{id}/consultas { fecha, motivo, diagnostico, prescripciones, estudios }
-Server -> DB : INSERT INTO consultas (id_paciente, fecha, motivo, diagnostico, prescripciones, estudios)
-DB --> Server : id_consulta
-Server --> Web : HTTP 201 Created { id_consulta, mensaje: "Consulta guardada" }
-Web --> Doctor : Muestra nueva entrada en el historial
-alt error en datos
-  Server --> Web : HTTP 400 Bad Request { error: "Datos inválidos" }
-  Web --> Doctor : Muestra validación
+Doctor -> Web : En perfil_paciente.html, clic "Nueva consulta"
+Web --> Doctor : Muestra modal o va a consulta.html
+
+Doctor -> Web : Completa formulario:\nfecha, motivo, diagnóstico, prescripciones, estudios
+
+Web -> Server : POST /api/consultas\n{ id_paciente, fecha, motivo, diagnostico,\n  prescripciones, estudios, observaciones }
+
+note right of Server
+  // Verifico que el paciente pertenezca al tenant
+  // del doctor logueado
+end note
+
+Server -> DB : SELECT id FROM pacientes\nWHERE id = $1 AND tenant_id = $2
+DB --> Server : paciente_existe
+
+alt paciente existe en este tenant
+  Server -> DB : INSERT INTO consultas\n  (id_paciente, fecha, motivo, diagnostico,\n   prescripciones, estudios, observaciones)\n  VALUES ($1, $2, $3, $4, $5, $6, $7)
+  DB --> Server : id_consulta
+  
+  Server --> Web : HTTP 201 Created\n{ id: id_consulta, mensaje: "Consulta guardada" }
+  Web --> Doctor : Muestra nueva entrada en historial
+  
+else paciente no existe o no autorizado
+  Server --> Web : HTTP 404 Not Found\n{ error: "Paciente no encontrado" }
+  Web --> Doctor : Muestra error
 end
+
+note over Server, DB
+  **Multitenancy**: Solo se pueden crear consultas para pacientes del mismo tenant
+  **Campos obligatorios**: id_paciente, fecha, motivo
+  **Campos opcionales**: prescripciones, estudios, observaciones
+end note
+
 @enduml

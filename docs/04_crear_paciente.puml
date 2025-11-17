@@ -1,22 +1,40 @@
 @startuml
 ' Diagrama 04 - Crear paciente
+' Sistema multitenancy: cada paciente pertenece al tenant del doctor
 title 04 - Crear paciente
+
 actor Doctor
 participant "Sistema Web" as Web
 participant "Servidor (API REST)" as Server
-database "Base de Datos" as DB
+database "PostgreSQL (Neon)" as DB
 
-Doctor -> Web : Abrir formulario "Nuevo paciente"
-Web -> Server : POST /pacientes { nombre, apellido, documento, fn, telefono, cobertura }
-Server -> DB : SELECT * FROM pacientes WHERE documento = ?
+Doctor -> Web : Completa formulario en paciente_crear.html
+Web -> Server : POST /api/pacientes\n{ nombre, apellido, dni, fecha_nacimiento, telefono, email }
+
+note right of Server
+  // Verifico autenticación con req.session.usuario
+  // Agrego el tenant_id del usuario logueado
+end note
+
+Server -> DB : SELECT * FROM pacientes\nWHERE dni = $1 AND tenant_id = $2
 DB --> Server : resultado
-alt documento no existe
-  Server -> DB : INSERT INTO pacientes (...)
+
+alt documento no existe en este tenant
+  Server -> DB : INSERT INTO pacientes\n(nombre, apellido, dni, fecha_nacimiento, telefono, email, tenant_id)\nVALUES ($1, $2, $3, $4, $5, $6, $7)
   DB --> Server : id_paciente
-  Server --> Web : HTTP 201 Created { id_paciente, mensaje: "Paciente creado" }
-  Web --> Doctor : Redirige a ficha del paciente
+  
+  Server --> Web : HTTP 201 Created\n{ id: id_paciente, mensaje: "Paciente creado" }
+  Web --> Doctor : Redirige a perfil_paciente.html?id=...
+  
 else documento duplicado
-  Server --> Web : HTTP 409 Conflict { error: "Paciente ya registrado" }
+  Server --> Web : HTTP 409 Conflict\n{ error: "Paciente ya registrado en tu consultorio" }
   Web --> Doctor : Muestra alerta
 end
+
+note over Server, DB
+  **Multitenancy**: Cada paciente se crea en el tenant del doctor
+  **Campos opcionales**: email, teléfono adicional
+  **Validación**: DNI único por tenant (no globalmente)
+end note
+
 @enduml

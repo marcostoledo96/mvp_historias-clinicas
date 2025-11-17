@@ -1,26 +1,34 @@
 @startuml
-' Diagrama 07 - Visualizar paciente (búsqueda)
-title 07 - Visualizar paciente (búsqueda)
+' Diagrama 07 - Visualizar paciente
+' Ver ficha completa con historial de consultas
+title 07 - Visualizar ficha de paciente
+
 actor Doctor
 participant "Sistema Web" as Web
 participant "Servidor (API REST)" as Server
-database "Base de Datos" as DB
+database "PostgreSQL (Neon)" as DB
 
-Doctor -> Web : Escribe nombre o documento en buscador
-Web -> Server : GET /pacientes?query={texto}
-Server -> DB : SELECT * FROM pacientes WHERE nombre LIKE ? OR documento = ?
-DB --> Server : lista_pacientes
-alt resultados encontrados
-  Server --> Web : HTTP 200 OK { pacientes[] }
-  Web --> Doctor : Muestra lista de coincidencias
-  Doctor -> Web : Selecciona paciente
-  Web -> Server : GET /pacientes/{id}
-  Server -> DB : SELECT * FROM pacientes WHERE id = ?
-  DB --> Server : registro_paciente
-  Server --> Web : HTTP 200 OK { paciente, historia_clinica_resumen }
-  Web --> Doctor : Muestra ficha y opciones (consultas, adjuntos)
-else sin resultados
-  Server --> Web : HTTP 204 No Content
-  Web --> Doctor : Muestra "Sin resultados"
+Doctor -> Web : Clic en paciente desde pacientes.html
+Web -> Server : GET /api/pacientes/{id}
+
+Server -> DB : SELECT * FROM pacientes\nWHERE id = $1 AND tenant_id = $2 AND activo = true
+DB --> Server : datos_paciente
+
+alt paciente existe
+  Server -> DB : SELECT * FROM consultas\n  WHERE id_paciente = $1\n  ORDER BY fecha DESC
+  DB --> Server : lista_consultas
+  
+  Server --> Web : HTTP 200 OK\n{ paciente: {...}, consultas: [...] }
+  Web --> Doctor : Muestra perfil_paciente.html\ncon datos y historial
+  
+else no existe
+  Server --> Web : HTTP 404 Not Found\n{ error: "Paciente no encontrado" }
+  Web --> Doctor : Redirige a pacientes.html
 end
+
+note over Server, DB
+  **Vista completa**: Datos personales + historial de consultas
+  **Ordenado**: Consultas más recientes primero
+end note
+
 @enduml

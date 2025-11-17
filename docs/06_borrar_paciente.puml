@@ -1,22 +1,39 @@
 @startuml
 ' Diagrama 06 - Borrar paciente
+' Soft delete: se marca como inactivo en lugar de eliminar
 title 06 - Borrar paciente
+
 actor Doctor
 participant "Sistema Web" as Web
 participant "Servidor (API REST)" as Server
-database "Base de Datos" as DB
+database "PostgreSQL (Neon)" as DB
 
-Doctor -> Web : Solicita eliminar paciente (confirmación)
-Web -> Server : DELETE /pacientes/{id}
-Server -> DB : SELECT COUNT(*) FROM consultas WHERE id_paciente = ?
-DB --> Server : cantidad_consultas
-alt tiene consultas asociadas (cantidad_consultas > 0)
-  Server --> Web : HTTP 409 Conflict { error: "No puede eliminarse: tiene consultas registradas" }
-  Web --> Doctor : Muestra advertencia
-else sin consultas
-  Server -> DB : DELETE FROM pacientes WHERE id = ?
+Doctor -> Web : Solicita eliminar paciente (modal de confirmación)
+Web -> Server : DELETE /api/pacientes/{id}
+
+Server -> DB : SELECT * FROM pacientes\nWHERE id = $1 AND tenant_id = $2
+DB --> Server : paciente_existente
+
+alt paciente existe
+  note right of Server
+    // Soft delete: marcamos como inactivo
+    // en lugar de eliminar el registro
+  end note
+  
+  Server -> DB : UPDATE pacientes\n  SET activo = false\n  WHERE id = $1 AND tenant_id = $2
   DB --> Server : OK
-  Server --> Web : HTTP 200 OK { mensaje: "Paciente eliminado" }
-  Web --> Doctor : Actualiza lista
+  
+  Server --> Web : HTTP 200 OK\n{ mensaje: "Paciente eliminado" }
+  Web --> Doctor : Actualiza lista de pacientes
+  
+else no existe
+  Server --> Web : HTTP 404 Not Found\n{ error: "Paciente no encontrado" }
+  Web --> Doctor : Muestra error
 end
+
+note over Server, DB
+  **Soft delete**: No se eliminan datos, solo se marcan inactivos
+  **Historial preservado**: Consultas del paciente se mantienen
+end note
+
 @enduml

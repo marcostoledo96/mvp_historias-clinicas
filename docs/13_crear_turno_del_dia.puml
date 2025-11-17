@@ -1,20 +1,37 @@
 @startuml
 ' Diagrama 13 - Crear turno del día
-title 13 - Crear turno del día
+' ⚠️ FUNCIONALIDAD FUTURA - No implementada en el MVP actual
+title 13 - Crear turno del día (FUTURO)
+
 actor Doctor
 participant "Sistema Web" as Web
 participant "Servidor (API REST)" as Server
-database "Base de Datos" as DB
+database "PostgreSQL (Neon)" as DB
 
-Doctor -> Web : Click "Agregar turno" (hora, paciente, observaciones)
-Web -> Server : POST /turnos { id_paciente, hora, fecha, estado }
-Server -> DB : INSERT INTO turnos (...)
+note over Doctor, DB #ffcccc
+  ⚠️ **FUNCIONALIDAD FUTURA**
+  Esta característica está planificada pero no implementada en el MVP
+end note
+
+Doctor -> Web : Click "Agregar turno" en turno_nuevo.html
+(hora, paciente, observaciones)
+
+Web -> Server : POST /api/turnos
+{ id_paciente, hora, fecha, estado, observaciones }
+
+Server -> DB : INSERT INTO turnos
+(id_paciente, hora, fecha, estado, observaciones, tenant_id)
+VALUES ($1, $2, $3, $4, $5, $6)
 DB --> Server : id_turno
-Server --> Web : HTTP 201 Created { id_turno, mensaje: "Turno creado" }
+
+Server --> Web : HTTP 201 Created
+{ id: id_turno, mensaje: "Turno creado" }
 Web --> Doctor : Actualiza vista de turnos
 
 alt datos inválidos
-  Server --> Web : HTTP 400 Bad Request { error: "Datos incompletos" }
+  Server --> Web : HTTP 400 Bad Request
+  { error: "Datos incompletos" }
   Web --> Doctor : Muestra validación
 end
+
 @enduml

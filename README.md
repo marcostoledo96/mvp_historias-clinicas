@@ -1,234 +1,309 @@
-# 🏥 Sistema de Historias Clínicas
+# Sistema de Historias Clínicas - MVP
 
-![Node.js](https://img.shields.io/badge/Node.js-18+-green)
-![Express](https://img.shields.io/badge/Express-4.18+-blue)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Compatible-blue)
-![Vercel](https://img.shields.io/badge/Deploy-Vercel-black)
+Sistema web para gestión de historias clínicas que desarrollamos como proyecto académico. Backend en Node.js/Express con PostgreSQL (Neon) y frontend en HTML/CSS/JavaScript vanilla.
 
-Sistema web completo que nuestro equipo desarrolló para gestión de historias clínicas médicas. Backend en Node.js/Express con PostgreSQL y frontend en HTML/CSS/JavaScript vanilla.
+## Equipo de Desarrollo
 
-## 🌐 Demo en Vivo
+Trabajo grupal realizado por:
+- **Toledo Marcos**
+- **Miszel Veronica**
+- **Buono Marcos**
 
-**[Ver Demo en Vercel →](https://tu-proyecto.vercel.app)**
+## Demo en Vivo
 
-**Credenciales para probar (datos de ejemplo):**
-- Doctor: `doctor@clinica.com` / `password123`
-- Admin: `admin@clinica.com` / `password123`
+Desplegado en: **[https://tu-proyecto.vercel.app](https://tu-proyecto.vercel.app)**
 
-## ✨ Características que implementamos
-
-- 🔐 **Autenticación segura** con sesiones
-- 👥 **Gestión completa de pacientes** 
-- 📋 **Historial médico** detallado
-- 📅 **Sistema de turnos**
-- 🎨 **Interfaz responsive**
-- 🗄️ **Base de datos PostgreSQL**
-- ☁️ **Deploy en Vercel**
- 
-
-## Requisitos técnicos
-
-- Node.js 18+ (recomiendo la versión LTS)
-- PostgreSQL (local o en la nube - recomendado: Neon)
-- Windows PowerShell (las instrucciones están para este shell)
-
-## Configuración
-
-Necesitas crear un archivo `.env` dentro de `backend/` con estas variables:
-
+Credenciales de prueba:
 ```
-# Conexión a PostgreSQL (puedes usar una de estas opciones; funciona perfecto con Neon)
-DATABASE_URL=postgres://usuario:password@host:5432/basedatos
-# O por separado:
-# DB_HOST=localhost
-# DB_PORT=5432
-# DB_USER=postgres
-# DB_PASSWORD=tu_password
-# DB_NAME=historias_clinicas
+Doctor: doctor@clinica.com / password123
+Admin:  admin@clinica.com / password123
+```
 
-# Para las sesiones
-SESSION_SECRET=un_secreto_muy_seguro
+## Qué hace el sistema
+
+Este MVP permite:
+- Autenticación segura con sesiones basadas en cookies (compatible con Vercel serverless)
+- Gestión completa de pacientes (crear, editar, ver historial, eliminar)
+- Registro de consultas médicas (historia clínica de cada paciente)
+- Sistema de turnos (preparado pero marcado como funcionalidad futura)
+- Recuperación de contraseña mediante pregunta secreta
+- Multitenancy: cada usuario ve solo sus propios datos
+
+## Requisitos
+
+- Node.js 18+ 
+- PostgreSQL (recomiendo usar Neon que es gratis y en la nube)
+- PowerShell (si estás en Windows)
+
+## Configuración inicial
+
+### 1. Variables de entorno
+
+Crear archivo `.env` en la carpeta `backend/`:
+
+```env
+# Base de datos PostgreSQL (ejemplo con Neon)
+DATABASE_URL=postgres://usuario:password@ep-algo.us-east-2.aws.neon.tech/neondb?sslmode=require
+
+# Clave secreta para las sesiones (cambiala por algo único)
+SESSION_SECRET=mi_clave_super_secreta_12345
 
 # Opcionales
-PORT=3000          # Si omites, usa 3000 por defecto. Si 3000 está ocupado, el servidor reintenta 3001..3005 automáticamente.
-AUTO_OPEN=0        # 1 para abrir navegador al iniciar
-# SSL: por defecto activo. En Neon, usar SSL requerido (p.ej. PGSSLMODE=require o no-verify)
-# NO_SSL=true      # Desactiva SSL (evítalo en producción)
-# PGSSLMODE=require | no-verify | disable | prefer
+PORT=3000
+AUTO_OPEN=0
 ```
 
-Notas importantes:
-- Pensado para Neon (PostgreSQL gestionado). La conexión implementa SSL por defecto; para certificados no verificados, se usa `PGSSLMODE=no-verify`.
-- El servidor escucha `process.env.PORT || 3000` (recomendado: 3000 fijo para desarrollo local).
+Notas:
+- Usamos Neon como base de datos (PostgreSQL gestionado, gratis hasta 512 MB)
+- La conexión usa SSL por defecto
+- Si el puerto 3000 está ocupado, el servidor intenta 3001, 3002, etc.
 
-## Instalación
-
-Desde PowerShell, en la raíz del proyecto:
+### 2. Instalar dependencias
 
 ```powershell
 cd backend
 npm install
 ```
 
-## Inicializar base de datos
+### 3. Inicializar base de datos
 
-- Ejecutar esquema y semillas rápidas (toma `database/scripts.sql` + `database/seeds.sql`):
+Ejecutar migraciones y datos de prueba:
 
 ```powershell
-# Desde backend/
-node migrate.js
-# o con npm
+cd backend
 npm run db:migrate
 ```
 
-- Ejecutar un SQL específico (por ejemplo, una migración puntual):
+Esto crea las tablas y agrega usuarios/pacientes de ejemplo.
+
+### 4. Crear usuario administrador
+
+Si necesitas un admin nuevo:
 
 ```powershell
-# Desde backend/
-node run_sql.js ..\database\migrations\20251019_turnos_paciente_opcional.sql
-```
-
-- Crear o promover un usuario admin:
-
-```powershell
-# Desde backend/
-# Directo
-node scripts\create_admin.js --email=admin@clinica.com --password=Secreta123 --nombre="Dra. Admin"
-# o vía npm (nota: usar "--" para pasar argumentos)
-npm run admin:create -- --email=admin@clinica.com --password=Secreta123 --nombre="Dra. Admin"
-```
-
-- Verificar/Ajustar usuarios de prueba:
-
-```powershell
-# Desde backend/
-node scripts\check_seed.js
-# o con npm
-npm run db:check-seed
+npm run admin:create -- --email=admin@clinica.com --password=Secreta123 --nombre="Dr. Admin"
 ```
 
 ## Ejecutar en desarrollo
 
-Libera el puerto 3000 si está ocupado y luego inicia el servidor.
-
 ```powershell
-# Ver procesos usando 3000
-netstat -ano | findstr :3000
-# Finaliza el PID (reemplaza 12345 por el PID encontrado)
-Stop-Process -Id 12345 -Force
-
-# Iniciar la API + frontend estático
 cd backend
 npm run dev
 ```
 
-Abre http://localhost:3000 (si `AUTO_OPEN=1`, se abrirá solo).
+Abre http://localhost:3000 en el navegador.
 
-### Aislamiento por usuario (multi-tenant)
-
-- Todos los datos de pacientes, consultas y turnos se aíslan por cuenta (columna `id_usuario`).
-- Los modelos y controladores aplican filtros por usuario en todas las operaciones.
-- Restricciones de BD: `pacientes` tiene índice único compuesto `(id_usuario, dni)` (ignora `dni` nulo).
-- Si migras una base existente, ejecuta la migración incremental:
-
+Si el puerto está ocupado:
 ```powershell
-# Desde backend/
-node run_sql.js ..\database\migrations\20251021_multi_tenant.sql
-```
+# Ver qué está usando el puerto 3000
+netstat -ano | findstr :3000
 
-Esto agrega `id_usuario` a tablas existentes, hace backfill y crea índices/foráneas.
+# Matar el proceso (reemplaza 12345 por el PID que aparece)
+Stop-Process -Id 12345 -Force
+```
 
 ## Estructura del proyecto
 
 ```
 backend/
-  server.js                # Express + rutas + sesiones + estáticos
-  db/connection.js         # Pool de PostgreSQL (SSL/IPV4 first)
-  routes/                  # Rutas REST (auth, pacientes, consultas, turnos)
-  controllers/             # Lógica de negocio
-  models/                  # Acceso a datos (pg)
-  middlewares/             # Autenticación, validaciones y logging
-  scripts/                 # Utilidades: create_admin, check_seed
-  migrate.js               # Ejecuta database/scripts.sql + seeds.sql
-  run_sql.js               # Ejecuta un archivo SQL arbitrario
+  server.js              # Servidor Express principal
+  db/
+    connection.js        # Conexión a PostgreSQL (pool)
+  routes/
+    auth.js              # Rutas de autenticación
+    pacientes.js         # CRUD de pacientes
+    consultas.js         # CRUD de consultas
+    turnos.js            # CRUD de turnos (futuro)
+  controllers/
+    authController.js    # Lógica de login/registro/recuperación
+    pacientesController.js
+    consultasController.js
+    turnosController.js
+  models/
+    Usuario.js           # Acceso a tabla usuarios
+    Paciente.js          # Acceso a tabla pacientes
+    Consulta.js          # Acceso a tabla consultas
+    Turno.js             # Acceso a tabla turnos
+  middlewares/
+    auth.js              # Verificación de sesión
+  scripts/
+    create_admin.js      # Crear usuarios admin desde terminal
+    check_seed.js        # Verificar datos de prueba
+  migrate.js             # Script para ejecutar migraciones
+  run_sql.js             # Ejecutar archivos SQL individuales
 
 frontend/
-  *.html                   # Vistas (login, pacientes, turnos, consultas, etc.)
-  js/                      # Módulos JS por página + utils + selector pacientes
-  css/styles.css           # Estilos, utilidades, Material Symbols
+  index.html             # Página de login
+  inicio.html            # Dashboard principal
+  pacientes.html         # Lista de pacientes
+  paciente_crear.html    # Formulario nuevo paciente
+  perfil_paciente.html   # Ver ficha del paciente
+  consultas.html         # Lista de consultas
+  consulta.html          # Ver/editar consulta
+  turnos.html            # Calendario de turnos (futuro)
+  configuracion.html     # Perfil del usuario
+  recuperar.html         # Recuperar contraseña
+  js/
+    auth.js              # Verificación de sesión en frontend
+    utils.js             # Funciones auxiliares
+    components.js        # Header y footer compartidos
+    (demás archivos específicos por página)
+  css/
+    styles.css           # Estilos completos del sistema
 
 database/
-  scripts.sql              # Esquema base
-  seeds.sql                # Datos de ejemplo
-  migrations/              # Cambios incrementales
+  scripts.sql            # Esquema inicial de la BD
+  seeds.sql              # Datos de ejemplo
+  migrations/            # Migraciones incrementales
+    20251019_pacientes_telefono_adicional.sql
+    20251019_relajar_requeridos_pacientes.sql
+    20251019_turnos_paciente_opcional.sql
+    20251021_multi_tenant.sql
+    20251026_create_session_table.sql
+    20251116_pregunta_secreta.sql
 
-docs/                      # Diagramas PlantUML de flujos clave
+docs/
+  (diagramas PlantUML de flujos del sistema)
 ```
 
-## Convenciones y UX relevantes
+## Endpoints principales de la API
 
-- Better Comments en todo el código: `// *`, `// ?`, `// !`, `// TODO`.
-- Iconos: Google Material Symbols (Outlined) vía import en `styles.css`.
-- Turnos:
-  - “Nuevo Turno” se abre en página separada; no crea paciente automáticamente.
-  - Si no hay `id_paciente`, se usan `paciente_nombre_tmp` y `paciente_apellido_tmp`.
-  - Navegación de fechas sin paginación, segura en zona horaria local.
-- Action bars responsivas con utilidades flex/gap; compactas en móvil.
+### Autenticación
 
-## API REST (principal)
+```
+POST   /api/auth/login                    # Iniciar sesión
+POST   /api/auth/logout                   # Cerrar sesión
+GET    /api/auth/verificar                # Verificar si hay sesión activa
+POST   /api/auth/registro                 # Crear usuario (solo admin)
+GET    /api/auth/perfil                   # Obtener datos del usuario logueado
+PUT    /api/auth/perfil                   # Actualizar nombre/email
+PUT    /api/auth/password                 # Cambiar contraseña
+POST   /api/auth/pregunta-secreta/configurar    # Guardar pregunta secreta
+POST   /api/auth/pregunta-secreta/obtener       # Obtener pregunta por email
+POST   /api/auth/recuperar                # Recuperar contraseña con pregunta secreta
+```
 
-Autenticación y perfil
-- POST `/api/auth/login`
-- POST `/api/auth/logout`
-- GET `/api/auth/verificar`
-- POST `/api/auth/registro` (solo admin)
-- GET `/api/auth/perfil` (sesión requerida)
-- PUT `/api/auth/perfil` (sesión requerida)
-- PUT `/api/auth/password` (sesión requerida)
-- POST `/api/auth/recuperar`
-- POST `/api/auth/restablecer`
+### Pacientes
 
-Pacientes
-- GET `/api/pacientes` (q=busqueda opcional)
-- GET `/api/pacientes/:id`
-- GET `/api/pacientes/buscar/:dni`
-- POST `/api/pacientes`
-- POST `/api/pacientes/minimo`
-- PUT `/api/pacientes/:id`
-- DELETE `/api/pacientes/:id` (soft delete)
+```
+GET    /api/pacientes                     # Listar pacientes (con búsqueda ?q=)
+GET    /api/pacientes/:id                 # Ver paciente específico
+POST   /api/pacientes                     # Crear paciente
+PUT    /api/pacientes/:id                 # Editar paciente
+DELETE /api/pacientes/:id                 # Eliminar paciente (soft delete)
+```
 
-Consultas
-- GET `/api/consultas`
-- GET `/api/consultas/:id`
-- GET `/api/consultas/paciente/:id_paciente`
-- GET `/api/consultas/fecha/:fecha`
-- POST `/api/consultas`
-- PUT `/api/consultas/:id`
-- DELETE `/api/consultas/:id`
+### Consultas
 
-Turnos
-- GET `/api/turnos`
-- GET `/api/turnos/hoy`
-- GET `/api/turnos/:id`
-- GET `/api/turnos/dia/:dia`
-- GET `/api/turnos/paciente/:id_paciente`
-- POST `/api/turnos`
-- PUT `/api/turnos/:id`
-- PUT `/api/turnos/:id/situacion`
-- DELETE `/api/turnos/:id`
+```
+GET    /api/consultas                     # Listar todas las consultas
+GET    /api/consultas/:id                 # Ver consulta específica
+GET    /api/consultas/paciente/:id        # Consultas de un paciente
+POST   /api/consultas                     # Crear consulta
+PUT    /api/consultas/:id                 # Editar consulta
+DELETE /api/consultas/:id                 # Eliminar consulta
+```
 
-## Solución de problemas
+### Turnos (preparado para futuro)
 
-- Puerto 3000 ocupado: usa `netstat -ano | findstr :3000` y `Stop-Process -Id <PID> -Force` en PowerShell.
-- SSL/Neon: si tu proveedor obliga SSL sin CA, está soportado con `PGSSLMODE=no-verify` o `NO_SSL=true` (evitar en prod).
-- Usuarios de prueba: ejecuta `node scripts\check_seed.js` si no puedes entrar con las credenciales indicadas.
+```
+GET    /api/turnos                        # Listar turnos
+GET    /api/turnos/hoy                    # Turnos de hoy
+GET    /api/turnos/dia/:fecha             # Turnos de una fecha
+POST   /api/turnos                        # Crear turno
+PUT    /api/turnos/:id                    # Editar turno
+DELETE /api/turnos/:id                    # Eliminar turno
+```
 
-## Equipo de Desarrollo
+## Características técnicas
 
-- Toledo Marcos
-- Miszel Veronica
-- Buono Marcos
+### Autenticación
+- Usamos `cookie-session` en lugar de JWT (más simple para Vercel serverless)
+- Las contraseñas se hashean con bcrypt (10 rounds)
+- La recuperación de contraseña usa pregunta secreta (también hasheada)
+- Sesiones de 7 días por defecto, 30 días si marcas "Recordarme"
+
+### Seguridad
+- Todas las consultas filtran por `tenant_id` (multitenancy)
+- Los pacientes tienen DNI único por usuario
+- Middleware `verificarAuth` protege rutas privadas
+- Middleware `verificarAdmin` protege acciones de administrador
+- Soft delete en pacientes (se marcan inactivos en lugar de borrar)
+
+### Base de datos
+- PostgreSQL en Neon (cloud)
+- Connection pooling automático
+- Todas las tablas tienen `tenant_id` para aislar datos
+- Migraciones versionadas en `/database/migrations/`
+
+### Frontend
+- HTML5 + CSS3 vanilla (sin frameworks)
+- JavaScript puro con fetch API
+- Componentes reutilizables (header/footer)
+- Responsive design
+- Iconos: Material Symbols de Google
+
+## Deploy en Vercel
+
+El proyecto está configurado para Vercel con `vercel.json`. 
+
+Pasos:
+1. Crear cuenta en Vercel
+2. Conectar el repositorio
+3. Configurar variables de entorno:
+   - `DATABASE_URL`
+   - `SESSION_SECRET`
+4. Deploy automático en cada push a main
+
+El frontend se sirve como archivos estáticos y el backend corre como serverless functions.
+
+## Cosas a recordar para defender/presentar
+
+1. **Autenticación simplificada**: Usamos cookie-session en lugar de JWT porque es más simple de explicar y funciona perfecto con serverless. Todo el flujo está comentado en español.
+
+2. **Pregunta secreta**: Implementamos recuperación de contraseña sin emails. El usuario configura una pregunta y respuesta (hasheada). Para recuperar: ingresa email → ve su pregunta → responde → resetea contraseña.
+
+3. **Multitenancy**: Cada usuario (doctor) tiene su `tenant_id`. Todos los pacientes, consultas y turnos se filtran automáticamente por este ID. Un doctor nunca ve datos de otro.
+
+4. **Comentarios en español**: Todo el código backend tiene comentarios detallados en español pensados para que yo pueda explicar cada parte en la defensa.
+
+5. **Turnos como futuro**: La funcionalidad de turnos está preparada (rutas, modelos, vistas) pero marcada como "funcionalidad futura" en los diagramas porque no es prioridad del MVP.
+
+## Solución de problemas comunes
+
+**Error de conexión a PostgreSQL:**
+- Verificar que `DATABASE_URL` esté correcta en `.env`
+- Verificar que Neon esté activo (a veces se suspende por inactividad)
+- Probar conexión: `npm run db:check-seed`
+
+**Puerto 3000 ocupado:**
+```powershell
+netstat -ano | findstr :3000
+Stop-Process -Id <PID> -Force
+```
+
+**No puedo logearme:**
+```powershell
+cd backend
+node scripts\check_seed.js
+```
+Esto muestra los usuarios de prueba y verifica sus contraseñas.
+
+**Olvidé mi contraseña de prueba:**
+Usar recuperación con pregunta secreta, o crear un nuevo admin:
+```powershell
+npm run admin:create -- --email=nuevo@admin.com --password=Pass123 --nombre="Admin Nuevo"
+```
+
+## Próximos pasos / Mejoras futuras
+
+- Implementar completamente el módulo de turnos
+- Agregar búsqueda avanzada de pacientes (por obra social, edad, etc)
+- Exportar historias clínicas a PDF
+- Notificaciones de turnos
+- Gráficos y estadísticas del consultorio
+- Modo oscuro (ya preparado en CSS pero deshabilitado)
 
 ## Licencia
 
-MIT (ajústala a tus necesidades si corresponde).
+MIT - Proyecto académico

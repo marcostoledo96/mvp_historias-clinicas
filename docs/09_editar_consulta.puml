@@ -1,22 +1,45 @@
 @startuml
 ' Diagrama 09 - Editar consulta
+' Modificar una entrada existente en la historia clínica
 title 09 - Editar consulta
+
 actor Doctor
 participant "Sistema Web" as Web
 participant "Servidor (API REST)" as Server
-database "Base de Datos" as DB
+database "PostgreSQL (Neon)" as DB
 
-Doctor -> Web : Abre consulta y edita campos
-Web -> Server : PUT /consultas/{id} { campo1, campo2, ... }
-Server -> DB : SELECT * FROM consultas WHERE id = ?
-DB --> Server : consulta_actual
-alt consulta existe
-  Server -> DB : UPDATE consultas SET ... WHERE id = ?
+Doctor -> Web : Abre consulta existente en consulta.html
+y modifica datos
+
+Web -> Server : PUT /api/consultas/{id}
+{ fecha, motivo, diagnostico,
+  prescripciones, estudios, observaciones }
+
+Server -> DB : SELECT c.* FROM consultas c
+  INNER JOIN pacientes p ON c.id_paciente = p.id
+  WHERE c.id = $1 AND p.tenant_id = $2
+DB --> Server : consulta_existente
+
+alt consulta existe en este tenant
+  Server -> DB : UPDATE consultas
+  SET fecha = $1, motivo = $2, diagnostico = $3,
+      prescripciones = $4, estudios = $5, observaciones = $6
+  WHERE id = $7
   DB --> Server : OK
-  Server --> Web : HTTP 200 OK { mensaje: "Consulta actualizada" }
+  
+  Server --> Web : HTTP 200 OK
+{ mensaje: "Consulta actualizada" }
   Web --> Doctor : Muestra confirmación
-else no encontrada
-  Server --> Web : HTTP 404 Not Found { error: "Consulta no encontrada" }
+  
+else consulta no existe o no autorizado
+  Server --> Web : HTTP 404 Not Found
+{ error: "Consulta no encontrada" }
   Web --> Doctor : Muestra error
 end
+
+note over Server, DB
+  **Seguridad**: Solo se editan consultas del mismo tenant (vía JOIN)
+  **Auditoría**: Se podría agregar campo updated_at para tracking
+end note
+
 @enduml

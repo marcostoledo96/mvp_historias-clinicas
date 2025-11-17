@@ -68,6 +68,38 @@
         </div>
       </div>
 
+      <div class="card mt-4">
+        <div class="card-header">
+          <h3 class="card-title section-title"><span class="material-symbols-outlined" aria-hidden="true">help</span> Pregunta secreta</h3>
+          <p class="text-gray-600">Configurá tu pregunta para recuperar contraseña</p>
+        </div>
+        <div class="card-body">
+          <div id="pregunta-actual-container" class="mb-3 hidden">
+            <div style="background:#f0f9ff; padding:12px; border-radius:6px; border-left:3px solid #3b82f6">
+              <p style="margin:0; color:#1e40af; font-weight:500">Pregunta configurada:</p>
+              <p id="pregunta-actual-texto" style="margin:4px 0 0 0; color:#1e3a8a"></p>
+            </div>
+          </div>
+          <form id="form-pregunta-secreta">
+            <div class="form-row">
+              <div class="form-group w-full">
+                <label class="form-label">Pregunta secreta</label>
+                <input name="pregunta" class="form-input" placeholder="Ej: ¿Nombre de tu primera mascota?" required />
+                <small style="color:#666">Elegí una pregunta que solo vos puedas responder</small>
+              </div>
+              <div class="form-group w-full">
+                <label class="form-label">Respuesta</label>
+                <input name="respuesta" type="password" class="form-input" placeholder="Tu respuesta secreta" required />
+                <small style="color:#666">La respuesta se guarda encriptada como tu contraseña</small>
+              </div>
+            </div>
+            <div class="card-footer">
+              <button type="submit" id="btn-guardar-pregunta" class="btn btn-success btn-field"><span class="material-symbols-outlined" aria-hidden="true">shield</span> Guardar pregunta secreta</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
       <!-- Sección de preferencias eliminada para el MVP -->
 
       <div id="card-admin" class="card mt-4 hidden">

@@ -1,0 +1,136 @@
+@startuml
+title Diagrama de Arquitectura - Sistema de Historias Clínicas MVP
+subtitle Vercel Serverless + PostgreSQL (Neon) + Cookie-based Sessions
+
+' --- CLIENTE ---
+node "Cliente Web (Doctor)" {
+  [Navegador Web]
+  
+  frame "Frontend (Estático)" {
+    [HTML + CSS]
+    [JavaScript (Vanilla)]
+    [Components (Header/Footer)]
+  }
+  
+  [Navegador Web] --> [HTML + CSS]
+  [Navegador Web] --> [JavaScript (Vanilla)]
+  [Navegador Web] --> [Components (Header/Footer)]
+}
+
+' --- VERCEL SERVERLESS ---
+cloud "Vercel Platform" {
+  
+  node "Frontend Hosting" {
+    [Archivos estáticos\n(HTML/CSS/JS)]
+  }
+  
+  node "Serverless Functions" {
+    frame "API Routes (/api/*)" {
+      [/api/auth/*\n(login, logout, perfil,\npregunta secreta)]
+      [/api/pacientes/*\n(CRUD pacientes)]
+      [/api/consultas/*\n(CRUD consultas)]
+      [/api/turnos/*\n(FUTURO)]
+    }
+    
+    frame "Controladores" {
+      [authController.js]
+      [pacientesController.js]
+      [consultasController.js]
+      [turnosController.js]
+    }
+    
+    frame "Middlewares" {
+      [verificarAuth\n(cookie-session)]
+      [verificarAdmin]
+      [validarCamposRequeridos]
+    }
+    
+    frame "Modelos (DB Access)" {
+      [Usuario.js]
+      [Paciente.js]
+      [Consulta.js]
+      [Turno.js]
+    }
+    
+    [/api/auth/*\n(login, logout, perfil,\npregunta secreta)] --> [Middlewares]
+    [/api/pacientes/*\n(CRUD pacientes)] --> [Middlewares]
+    [/api/consultas/*\n(CRUD consultas)] --> [Middlewares]
+    
+    [Middlewares] --> [authController.js]
+    [Middlewares] --> [pacientesController.js]
+    [Middlewares] --> [consultasController.js]
+    
+    [authController.js] --> [Usuario.js]
+    [pacientesController.js] --> [Paciente.js]
+    [consultasController.js] --> [Consulta.js]
+    [turnosController.js] --> [Turno.js]
+  }
+}
+
+' --- NEON DATABASE ---
+database "Neon (PostgreSQL)" {
+  frame "Base de Datos\nPostgreSQL" {
+    [usuarios\n(con pregunta_secreta)]
+    [pacientes\n(multitenancy)]
+    [consultas\n(historias clínicas)]
+    [turnos\n(FUTURO)]
+    [session\n(cookie-session storage)]
+  }
+}
+
+' --- CONEXIONES ---
+[JavaScript (Vanilla)] --> [Archivos estáticos\n(HTML/CSS/JS)] : Fetch API\n(HTTP/HTTPS)
+[Archivos estáticos\n(HTML/CSS/JS)] --> [API Routes (/api/*)] : REST API\n(JSON)
+
+[Usuario.js] --> [usuarios\n(con pregunta_secreta)] : SQL Queries\n(pg Pool)
+[Paciente.js] --> [pacientes\n(multitenancy)] : SQL Queries
+[Consulta.js] --> [consultas\n(historias clínicas)] : SQL Queries
+[Turno.js] --> [turnos\n(FUTURO)] : SQL Queries
+
+[Middlewares] --> [session\n(cookie-session storage)] : Lectura/Escritura\nde sesiones
+
+' --- NOTAS ---
+note right of [Navegador Web]
+  **Frontend Simple:**
+  - HTML5 + CSS3 (styles.css)
+  - JavaScript Vanilla (sin frameworks)
+  - Componentes reutilizables (header/footer)
+  - Fetch API para comunicación
+end note
+
+note right of [Serverless Functions]
+  **Backend Stateless:**
+  - Node.js + Express en funciones Vercel
+  - Cookie-session para sesiones (no JWT)
+  - Bcrypt para passwords y respuestas secretas
+  - Multitenancy: tenant_id en todas las tablas
+  - Comentarios en español para defensa académica
+end note
+
+note right of [Neon (PostgreSQL)]
+  **Base de Datos:**
+  - PostgreSQL en Neon (cloud)
+  - Connection pooling automático
+  - Migraciones en /database/migrations/
+  - Tablas con tenant_id para multitenancy
+  - Pregunta secreta para recuperación
+end note
+
+note bottom of [authController.js]
+  **Autenticación simplificada:**
+  - Login con email + password (bcrypt.compare)
+  - Cookie de sesión (30 días si "Recordarme")
+  - Recuperación con pregunta secreta
+  - Sin tokens JWT ni códigos temporales
+end note
+
+note bottom of [verificarAuth\n(cookie-session)]
+  **Seguridad:**
+  - Cookie-session cifrado con secret
+  - Middleware verifica req.session.usuario
+  - Admin-only endpoints con verificarAdmin
+  - Validación de campos requeridos
+end note
+
+@enduml
+

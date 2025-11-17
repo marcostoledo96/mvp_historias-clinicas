@@ -1,22 +1,38 @@
 @startuml
 ' Diagrama 15 - Borrar turno del día
-title 15 - Borrar turno del día
+' ⚠️ FUNCIONALIDAD FUTURA - No implementada en el MVP actual
+title 15 - Borrar turno del día (FUTURO)
+
 actor Doctor
 participant "Sistema Web" as Web
 participant "Servidor (API REST)" as Server
-database "Base de Datos" as DB
+database "PostgreSQL (Neon)" as DB
 
-Doctor -> Web : Solicita eliminar turno (confirmación)
-Web -> Server : DELETE /turnos/{id}
-Server -> DB : SELECT * FROM turnos WHERE id = ?
+note over Doctor, DB #ffcccc
+  ⚠️ **FUNCIONALIDAD FUTURA**
+  Esta característica está planificada pero no implementada en el MVP
+end note
+
+Doctor -> Web : Solicita eliminar turno (confirmación modal)
+Web -> Server : DELETE /api/turnos/{id}
+
+Server -> DB : SELECT * FROM turnos
+WHERE id = $1 AND tenant_id = $2
 DB --> Server : turno_existente
+
 alt existe
-  Server -> DB : DELETE FROM turnos WHERE id = ?
+  Server -> DB : DELETE FROM turnos
+  WHERE id = $1 AND tenant_id = $2
   DB --> Server : OK
-  Server --> Web : HTTP 200 OK { mensaje: "Turno eliminado" }
-  Web --> Doctor : Actualiza grilla
+  
+  Server --> Web : HTTP 200 OK
+  { mensaje: "Turno eliminado" }
+  Web --> Doctor : Actualiza grilla de turnos
+  
 else no existe
-  Server --> Web : HTTP 404 Not Found { error: "Turno no encontrado" }
+  Server --> Web : HTTP 404 Not Found
+  { error: "Turno no encontrado" }
   Web --> Doctor : Muestra error
 end
+
 @enduml

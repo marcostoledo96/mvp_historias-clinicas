@@ -1,23 +1,63 @@
 @startuml
-' Diagrama 03 - Crear usuario (registro)
-title 03 - Crear usuario
-actor Doctor
+' Diagrama 03 - Crear usuario (solo administradores)
+' Endpoint protegido: solo usuarios con rol 'admin' pueden crear usuarios
+title 03 - Crear usuario (Registro)
+
+actor Admin
 participant "Sistema Web" as Web
 participant "Servidor (API REST)" as Server
-database "Base de Datos" as DB
+database "PostgreSQL (Neon)" as DB
 
-Doctor -> Web : Formulario registro (nombre, email, password, rol)
-Web -> Server : POST /usuarios { nombre, email, password, rol }
-Server -> DB : SELECT * FROM usuarios WHERE email = ?
-DB --> Server : resultado
-alt email no existe
-  Server -> Server : Hashea password
-  Server -> DB : INSERT INTO usuarios (...)
-  DB --> Server : id_usuario
-  Server --> Web : HTTP 201 Created { id_usuario, mensaje: "Usuario creado" }
-  Web --> Doctor : Muestra confirmación
-else email duplicado
-  Server --> Web : HTTP 409 Conflict { error: "Email ya registrado" }
-  Web --> Doctor : Muestra alerta
+Admin -> Web : Accede a configuracion.html\n(sección Administración)
+
+note right of Web
+  Solo visible para usuarios
+  con rol 'admin'
+end note
+
+Admin -> Web : Completa formulario:\nnombre, email, password, rol
+Web -> Server : POST /api/auth/registro\n{ nombre_completo, email, password, rol }
+
+note right of Server
+  // Verifico que el usuario logueado sea admin
+  // usando el middleware verificarAdmin()
+end note
+
+Server -> Server : Verifica req.session.usuario.rol === 'admin'
+
+alt usuario es admin
+  
+  Server -> DB : SELECT * FROM usuarios\nWHERE email = $1 AND tenant_id = $2
+  DB --> Server : resultado
+  
+  alt email no existe en este tenant
+    
+    note right of Server
+      // Hasheo la contraseña con bcrypt (10 rounds)
+      // y creo el usuario en el tenant actual
+    end note
+    
+    Server -> Server : bcrypt.hash(password, 10)
+    Server -> DB : INSERT INTO usuarios\n(nombre, email, password_hash, rol, tenant_id)\nVALUES ($1, $2, $3, $4, $5)
+    DB --> Server : id_usuario
+    
+    Server --> Web : HTTP 201 Created\n{ id_usuario, mensaje: "Usuario creado" }
+    Web --> Admin : Muestra confirmación
+    
+  else email duplicado
+    Server --> Web : HTTP 409 Conflict\n{ error: "Email ya registrado" }
+    Web --> Admin : Muestra alerta
+  end
+  
+else usuario no es admin
+  Server --> Web : HTTP 403 Forbidden\n{ error: "Solo administradores pueden crear usuarios" }
+  Web --> Admin : Muestra error de permisos
 end
+
+note over Server, DB
+  **Seguridad**: Solo administradores pueden crear usuarios
+  **Multitenancy**: Usuarios creados en el mismo tenant del admin
+  **Contraseñas**: Hasheadas con bcrypt antes de guardar
+end note
+
 @enduml

@@ -1,37 +1,77 @@
 @startuml
-' Diagrama 02 - Recuperar contraseña
-title 02 - Recuperar contraseña
+' Diagrama 02 - Recuperar contraseña con pregunta secreta
+' Sistema simplificado sin tokens ni correos electrónicos
+' El usuario responde su pregunta secreta para recuperar el acceso
+title 02 - Recuperar contraseña con pregunta secreta
+
 actor Doctor
 participant "Sistema Web" as Web
 participant "Servidor (API REST)" as Server
-database "Base de Datos" as DB
+database "PostgreSQL (Neon)" as DB
 
-Doctor -> Web : Solicita "Olvidé mi contraseña" con email
-Web -> Server : POST /auth/recuperar { email }
-Server -> DB : SELECT * FROM usuarios WHERE email = ?
-DB --> Server : registro_usuario
-alt usuario existe
-  Server -> Server : Genera token temporal (expiry)
-  Server -> DB : UPDATE usuarios SET token_recuperacion = ? WHERE id = ?
-  Server -> Web : HTTP 200 OK { mensaje: "Se envió correo de recuperación" }
-  Web --> Doctor : Indica revisar correo
-  ' Usuario hace clic en enlace (token)
-  Doctor -> Web : Accede enlace de recuperación (token)
-  Web -> Server : GET /auth/reset?token=ABC
-  Server -> DB : SELECT * FROM usuarios WHERE token_recuperacion = ?
-  DB --> Server : registro_usuario
-  alt token válido
-    Web -> Server : POST /auth/reset { token, nueva_password }
-    Server -> DB : UPDATE usuarios SET password = ?, token_recuperacion = NULL WHERE id = ?
-    DB --> Server : OK
-    Server --> Web : HTTP 200 OK { mensaje: "Contraseña actualizada" }
-    Web --> Doctor : Muestra confirmación
-  else token inválido/expirado
-    Server --> Web : HTTP 400 Bad Request { error: "Token inválido o expirado" }
-    Web --> Doctor : Muestra error
-  end
-else usuario no existe
-  Server --> Web : HTTP 404 Not Found { error: "Email no registrado" }
-  Web --> Doctor : Muestra mensaje
+== Paso 1: Obtener pregunta secreta ==
+
+Doctor -> Web : Ingresa su email en recuperar.html
+Web -> Server : POST /api/auth/pregunta-secreta/obtener\n{ email }
+
+note right of Server
+  // Busco al usuario por email
+  // y devuelvo solo la pregunta (no la respuesta)
+end note
+
+Server -> DB : SELECT pregunta_secreta\nFROM usuarios\nWHERE email = $1 AND activo = true
+DB --> Server : pregunta_secreta
+
+alt usuario existe y tiene pregunta configurada
+  Server --> Web : HTTP 200 OK\n{ pregunta: "¿Nombre de tu primera mascota?" }
+  Web --> Doctor : Muestra la pregunta secreta
+else usuario no existe o sin pregunta
+  Server --> Web : HTTP 404 Not Found\n{ error: "No se encontró pregunta para este email" }
+  Web --> Doctor : Muestra error (debe configurar pregunta primero)
 end
+
+== Paso 2: Verificar respuesta y restablecer contraseña ==
+
+Doctor -> Web : Ingresa respuesta + nueva contraseña
+Web -> Server : POST /api/auth/recuperar\n{ email, respuesta, nueva_password }
+
+note right of Server
+  // Busco el usuario con su respuesta_secreta_hash
+  // La respuesta está hasheada con bcrypt igual que la contraseña
+end note
+
+Server -> DB : SELECT id, respuesta_secreta_hash\nFROM usuarios\nWHERE email = $1 AND activo = true
+DB --> Server : id, respuesta_secreta_hash
+
+alt respuesta correcta
+  note right of Server
+    // bcrypt.compare verifica que la respuesta
+    // ingresada coincida con el hash guardado
+  end note
+  
+  Server -> Server : bcrypt.compare(respuesta, respuesta_secreta_hash)
+  
+  note right of Server
+    // Si la respuesta es correcta,
+    // hasheo la nueva contraseña y la guardo
+  end note
+  
+  Server -> Server : bcrypt.hash(nueva_password, 10)
+  Server -> DB : UPDATE usuarios\nSET password_hash = $1\nWHERE id = $2
+  DB --> Server : OK
+  
+  Server --> Web : HTTP 200 OK\n{ mensaje: "Contraseña restablecida con éxito" }
+  Web --> Doctor : Muestra confirmación y redirige a login
+  
+else respuesta incorrecta
+  Server --> Web : HTTP 401 Unauthorized\n{ error: "Respuesta incorrecta" }
+  Web --> Doctor : Muestra error
+end
+
+note over Server, DB
+  **Seguridad**: La respuesta secreta se guarda hasheada igual que la contraseña
+  **Sin tokens**: No se necesitan códigos temporales ni correos electrónicos
+  **Configuración**: El usuario debe configurar su pregunta en configuracion.html
+end note
+
 @enduml

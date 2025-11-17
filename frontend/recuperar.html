@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <!--
-  Vista: Recuperar contraseña
-  Propósito: Flujo en dos pasos (solicitud de código + restablecimiento).
-  Scripts asociados: js/utils.js, js/recuperar.js
+  Vista: Recuperar contraseña con pregunta secreta
+  Flujo en 2 pasos:
+  1. Usuario ingresa email → sistema muestra su pregunta secreta
+  2. Usuario responde pregunta + nueva contraseña → sistema recupera acceso
 -->
 <html lang="es">
 <head>
@@ -12,31 +13,58 @@
   <link rel="icon" href="img/historial.ico" sizes="any">
   <link rel="icon" type="image/png" href="img/historial.png">
   <link rel="stylesheet" href="css/styles.css" />
-  <!-- Tema persistente removido (MVP: solo claro) -->
 </head>
 <body>
-  <!-- Toggle de tema removido -->
   <div class="login-container">
     <div class="login-card">
-      <div class="login-header"><h1>Recuperar contraseña</h1><p>Te enviaremos un código a tu email</p></div>
+      <div class="login-header">
+        <h1>Recuperar contraseña</h1>
+        <p>Responde tu pregunta secreta para recuperar el acceso</p>
+      </div>
+      
       <div id="alert-container"></div>
-      <form id="form-solicitar-codigo">
-        <div class="form-group"><label class="form-label">Email</label><input name="email" type="email" class="form-input" required/></div>
-        <button class="btn btn-primary w-full" type="submit">Enviar código</button>
+      
+      <!-- Paso 1: Obtener pregunta secreta -->
+      <form id="form-obtener-pregunta">
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input name="email" type="email" class="form-input" placeholder="tu@email.com" required/>
+        </div>
+        <button class="btn btn-primary w-full" type="submit">Ver mi pregunta secreta</button>
       </form>
-      <hr style="margin:12px 0"/>
-      <div class="login-header"><p>Ingresá el código y tu nueva contraseña</p></div>
-      <form id="form-restablecer">
-        <div class="form-group"><label class="form-label">Email</label><input name="email" type="email" class="form-input" required/></div>
-        <div class="form-group"><label class="form-label">Código</label><input name="codigo" class="form-input" required/></div>
-        <div class="form-group"><label class="form-label">Nueva contraseña</label><input name="password" type="password" class="form-input" required/></div>
-        <button class="btn btn-success w-full" type="submit">Restablecer</button>
+      
+      <hr style="margin:20px 0"/>
+      
+      <!-- Paso 2: Responder pregunta y recuperar (inicialmente oculto) -->
+      <form id="form-recuperar" style="display:none">
+        <div class="form-group">
+          <label class="form-label">Tu pregunta secreta:</label>
+          <p id="pregunta-display" style="font-weight:600; padding:8px; background:#f0f0f0; border-radius:4px"></p>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Respuesta</label>
+          <input name="respuesta" type="text" class="form-input" placeholder="Tu respuesta" required/>
+          <small style="color:#666">Escribí exactamente como la configuraste</small>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Nueva contraseña</label>
+          <input name="nueva_password" type="password" class="form-input" placeholder="Mínimo 6 caracteres" required/>
+        </div>
+        
+        <input type="hidden" name="email" id="email-hidden"/>
+        
+        <button class="btn btn-success w-full" type="submit">Recuperar contraseña</button>
       </form>
-      <div style="margin-top: 12px; text-align:center"><a href="index.html">Volver al Login</a></div>
+      
+      <div style="margin-top: 20px; text-align:center">
+        <a href="index.html">Volver al Login</a>
+      </div>
     </div>
   </div>
+  
   <script src="js/utils.js"></script>
   <script src="js/recuperar.js"></script>
-  <!-- Script de toggle de tema removido -->
 </body>
 </html>

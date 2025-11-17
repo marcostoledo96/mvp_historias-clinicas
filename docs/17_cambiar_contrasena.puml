@@ -1,0 +1,57 @@
+@startuml
+' Diagrama 17 - Cambiar contraseña
+' Usuario autenticado cambia su contraseña desde configuracion.html
+title 17 - Cambiar contraseña
+
+actor Doctor
+participant "Sistema Web" as Web
+participant "Servidor (API REST)" as Server
+database "PostgreSQL (Neon)" as DB
+
+Doctor -> Web : Accede a configuracion.html
+Web --> Doctor : Muestra formulario "Cambiar contraseña"
+
+Doctor -> Web : Ingresa contraseña actual + nueva contraseña
+Web -> Server : PUT /api/auth/password\n{ password_actual, password_nueva }
+
+note right of Server
+  // Verifico que el usuario esté logueado
+  // Necesito confirmar la contraseña actual por seguridad
+end note
+
+Server -> DB : SELECT password_hash\nFROM usuarios\nWHERE id = $1
+DB --> Server : password_hash
+
+note right of Server
+  // Verifico que la contraseña actual sea correcta
+  // bcrypt.compare compara el texto con el hash
+end note
+
+Server -> Server : bcrypt.compare(password_actual, password_hash)
+
+alt contraseña actual correcta
+  
+  note right of Server
+    // Hasheo la nueva contraseña con bcrypt (10 rounds)
+    // y la guardo en la base de datos
+  end note
+  
+  Server -> Server : bcrypt.hash(password_nueva, 10)
+  Server -> DB : UPDATE usuarios\nSET password_hash = $1\nWHERE id = $2
+  DB --> Server : OK
+  
+  Server --> Web : HTTP 200 OK\n{ mensaje: "Contraseña actualizada" }
+  Web --> Doctor : Muestra confirmación
+  
+else contraseña actual incorrecta
+  Server --> Web : HTTP 401 Unauthorized\n{ error: "Contraseña actual incorrecta" }
+  Web --> Doctor : Muestra error
+end
+
+note over Server, DB
+  **Seguridad**: Requiere confirmar contraseña actual
+  **Autenticación**: Usuario debe estar logueado
+  **Bcrypt**: Todas las contraseñas hasheadas con 10 rounds
+end note
+
+@enduml

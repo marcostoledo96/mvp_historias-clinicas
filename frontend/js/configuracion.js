@@ -1,7 +1,8 @@
-// ! Configuración de cuenta (perfil, contraseña y preferencias locales)
+// ! Configuración de cuenta (perfil, contraseña, pregunta secreta y preferencias locales)
 // * Contrato rápido:
 //   - GET/PUT /api/auth/perfil para datos del usuario
 //   - PUT /api/auth/password para cambio de contraseña
+//   - POST /api/auth/pregunta-secreta/configurar para pregunta de recuperación
 //   - Preferencias se guardan en localStorage por ahora (tema, auto_inicio, page_size)
 // ? Requiere: inicializarPagina() desde components.js, y utils para UI (mostrarAlerta, setButtonLoading, manejarErrorAPI)
 
@@ -21,6 +22,15 @@ async function cargarPerfil() {
     const form = document.getElementById('form-perfil');
     form.nombre.value = data.nombre || '';
     form.email.value = data.email || '';
+    
+    // Mostrar pregunta secreta si existe
+    if (data.pregunta_secreta) {
+      const container = document.getElementById('pregunta-actual-container');
+      const texto = document.getElementById('pregunta-actual-texto');
+      texto.textContent = data.pregunta_secreta;
+      container.classList.remove('hidden');
+    }
+    
     // Guardar rol en dataset para control de UI admin
     document.body.dataset.rol = data.rol || '';
   } catch (e) { manejarErrorAPI(e); }
@@ -71,6 +81,39 @@ function configurarFormularios() {
       }
     } catch (e) { manejarErrorAPI(e); }
     finally { setButtonLoading('btn-guardar-password', false); }
+  });
+
+  // Formulario de pregunta secreta
+  const formPregunta = document.getElementById('form-pregunta-secreta');
+  formPregunta.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const data = Object.fromEntries(new FormData(formPregunta).entries());
+    
+    if (!data.pregunta || !data.respuesta) {
+      mostrarAlerta('Completa ambos campos de la pregunta secreta', 'warning');
+      return;
+    }
+    
+    try {
+      setButtonLoading('btn-guardar-pregunta', true);
+      const resp = await fetch('/api/auth/pregunta-secreta/configurar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(data)
+      });
+      const result = await resp.json();
+      
+      if (resp.ok) {
+        mostrarAlerta('Pregunta secreta configurada correctamente', 'success');
+        formPregunta.reset();
+        // Recargar perfil para mostrar la pregunta actualizada
+        await cargarPerfil();
+      } else {
+        mostrarAlerta(result.error || 'No se pudo configurar la pregunta secreta', 'error');
+      }
+    } catch (e) { manejarErrorAPI(e); }
+    finally { setButtonLoading('btn-guardar-pregunta', false); }
   });
 
   // Sección de preferencias eliminada (MVP)

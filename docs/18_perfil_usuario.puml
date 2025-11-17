@@ -1,0 +1,66 @@
+@startuml
+' Diagrama 18 - Ver y editar perfil de usuario
+' Usuario puede ver y actualizar sus datos personales
+title 18 - Ver y editar perfil de usuario
+
+actor Doctor
+participant "Sistema Web" as Web
+participant "Servidor (API REST)" as Server
+database "PostgreSQL (Neon)" as DB
+
+== Visualizar perfil ==
+
+Doctor -> Web : Accede a configuracion.html
+Web -> Server : GET /api/auth/perfil
+
+note right of Server
+  // Obtengo el id del usuario desde req.session.usuario
+  // Devuelvo sus datos (pero NO la contraseña)
+end note
+
+Server -> DB : SELECT id, nombre, email, rol, pregunta_secreta\nFROM usuarios\nWHERE id = $1
+DB --> Server : datos_usuario
+
+Server --> Web : HTTP 200 OK\n{ nombre, email, rol, pregunta_secreta }
+Web --> Doctor : Muestra datos en formulario
+
+== Editar perfil ==
+
+Doctor -> Web : Modifica nombre y/o email
+Web -> Server : PUT /api/auth/perfil\n{ nombre, email }
+
+note right of Server
+  // Verifico que el usuario esté logueado
+  // Actualizo solo los campos que puede cambiar
+end note
+
+Server -> DB : SELECT * FROM usuarios\nWHERE email = $1 AND id != $2
+DB --> Server : resultado
+
+alt email disponible (o sin cambios)
+  Server -> DB : UPDATE usuarios\nSET nombre = $1, email = $2\nWHERE id = $3
+  DB --> Server : OK
+  
+  note right of Server
+    // Actualizo también la sesión para que
+    // el header muestre el nuevo nombre
+  end note
+  
+  Server -> Server : req.session.usuario.nombre = nombre\nreq.session.usuario.email = email
+  
+  Server --> Web : HTTP 200 OK\n{ usuario: { nombre, email, rol } }
+  Web --> Doctor : Muestra confirmación y actualiza header
+  
+else email ya existe
+  Server --> Web : HTTP 409 Conflict\n{ error: "Email ya está en uso" }
+  Web --> Doctor : Muestra error
+end
+
+note over Server, DB
+  **Seguridad**: Usuario solo puede editar sus propios datos
+  **Campos editables**: nombre, email (rol NO es editable)
+  **Validación**: Email debe ser único en el sistema
+  **Sesión actualizada**: Los cambios se reflejan inmediatamente
+end note
+
+@enduml

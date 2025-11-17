@@ -1,20 +1,43 @@
 @startuml
 ' Diagrama 11 - Visualizar consulta
+' Ver detalles de una entrada específica de la historia clínica
 title 11 - Visualizar consulta
+
 actor Doctor
 participant "Sistema Web" as Web
 participant "Servidor (API REST)" as Server
-database "Base de Datos" as DB
+database "PostgreSQL (Neon)" as DB
 
-Doctor -> Web : Abre historial del paciente
-Web -> Server : GET /pacientes/{id}/consultas
-Server -> DB : SELECT * FROM consultas WHERE id_paciente = ? ORDER BY fecha DESC
-DB --> Server : consultas_lista
-alt hay consultas
-  Server --> Web : HTTP 200 OK { consultas[] }
-  Web --> Doctor : Muestra lista de consultas con resumen
-else sin consultas
-  Server --> Web : HTTP 204 No Content
-  Web --> Doctor : Muestra "Sin consultas registradas"
+Doctor -> Web : Clic en consulta desde perfil del paciente
+
+Web -> Server : GET /api/consultas/{id}
+
+Server -> DB : SELECT c.*, p.nombre, p.apellido
+  FROM consultas c
+  INNER JOIN pacientes p ON c.id_paciente = p.id
+  WHERE c.id = $1 AND p.tenant_id = $2
+DB --> Server : datos_consulta + datos_paciente
+
+alt consulta existe en este tenant
+  Server --> Web : HTTP 200 OK
+{ consulta: {
+    id, fecha, motivo, diagnostico,
+    prescripciones, estudios, observaciones,
+    paciente: { nombre, apellido }
+  }
+}
+  Web --> Doctor : Muestra consulta.html con todos los detalles
+  
+else consulta no existe o no autorizado
+  Server --> Web : HTTP 404 Not Found
+{ error: "Consulta no encontrada" }
+  Web --> Doctor : Redirige o muestra error
 end
+
+note over Server, DB
+  **Vista completa**: Todos los campos de la consulta + datos del paciente
+  **Seguridad**: Solo consultas del mismo tenant (via JOIN)
+  **Navegación**: Permite editar o borrar desde esta vista
+end note
+
 @enduml
