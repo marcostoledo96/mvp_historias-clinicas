@@ -106,7 +106,6 @@ note right of [Serverless Functions]
   - Sesión: cookie cifrada (no tabla, no JWT)
   - Bcrypt para contraseñas y respuesta secreta
   - Multitenancy: aislamiento por `id_usuario` (cada médico ve sólo lo suyo)
-  - Código comentado en español para defensa
 end note
 
 note right of [Neon (PostgreSQL)]

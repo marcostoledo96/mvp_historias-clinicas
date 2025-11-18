@@ -102,6 +102,42 @@ function configurarEventosConsulta(opts = {}) {
     });
   }
 
+  // Botón de eliminar consulta (solo en modo edición)
+  const btnEliminar = document.getElementById('btn-eliminar-consulta');
+  if (btnEliminar && modo === 'editar' && idConsulta) {
+    btnEliminar.style.display = 'inline-block';
+    btnEliminar.addEventListener('click', async () => {
+      if (!confirm('¿Estás seguro de eliminar esta consulta? Esta acción no se puede deshacer.')) return;
+      
+      try {
+        const resp = await fetch(`/api/consultas/${idConsulta}`, {
+          method: 'DELETE',
+          credentials: 'include'
+        });
+        
+        if (resp.ok) {
+          mostrarAlerta('Consulta eliminada correctamente', 'success');
+          // Redirigir al perfil del paciente o a la lista de consultas
+          const form = document.getElementById('form-consulta');
+          const pid = form?.dataset?.idPaciente;
+          setTimeout(() => {
+            if (pid) {
+              window.location.href = `perfil_paciente.html?id=${pid}`;
+            } else {
+              window.location.href = 'consultas.html';
+            }
+          }, 600);
+        } else {
+          const result = await resp.json();
+          mostrarAlerta(result.error || 'No se pudo eliminar la consulta', 'error');
+        }
+      } catch (e) {
+        manejarErrorAPI(e);
+        mostrarAlerta('Error al eliminar la consulta', 'error');
+      }
+    });
+  }
+
   document.getElementById('form-consulta').addEventListener('submit', async (e) => {
     e.preventDefault();
     const data = Object.fromEntries(new FormData(e.target).entries());
@@ -136,10 +172,17 @@ function configurarEventosConsulta(opts = {}) {
       const result = await resp.json();
       if (resp.ok) {
         mostrarAlerta(modo === 'crear' ? 'Consulta creada' : 'Consulta guardada', 'success');
-        // Si es creación, podemos redirigir a la vista de la consulta recién creada
-        if (modo === 'crear' && result && (result.id || result.id_consulta)) {
-          const nuevoId = result.id || result.id_consulta;
-          setTimeout(() => { window.location.href = `consulta.html?id=${nuevoId}`; }, 600);
+        // Si es creación, redirigir al perfil del paciente
+        if (modo === 'crear') {
+          const form = document.getElementById('form-consulta');
+          const pid = idPaciente || form?.dataset?.idPaciente;
+          setTimeout(() => { 
+            if (pid) {
+              window.location.href = `perfil_paciente.html?id=${pid}`;
+            } else {
+              window.location.href = 'consultas.html';
+            }
+          }, 600);
         }
       } else {
         manejarErrorAPI(result, resp);

@@ -66,7 +66,7 @@ CREATE TABLE consultas (
     fecha_modificacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Crear tabla turnos
+-- Crear tabla turnos - FUNCION A FUTURO
 CREATE TABLE turnos (
     id_turno SERIAL PRIMARY KEY,
     id_usuario INTEGER NOT NULL REFERENCES usuarios(id_usuario) ON DELETE CASCADE,
