@@ -10,7 +10,7 @@ database "PostgreSQL (Neon)" as DB
 
 Doctor -> Web : Abre sección "Turnos del día" (turnos.html)
 Web -> Server : GET /api/turnos?fecha={hoy}
-Server -> DB : SELECT * FROM turnos\nWHERE fecha = CURRENT_DATE\nAND tenant_id = $1\nORDER BY hora
+Server -> DB : SELECT * FROM turnos\nWHERE fecha = CURRENT_DATE\nAND id_usuario = $1\nORDER BY hora
 DB --> Server : lista_turnos
 
 alt hay turnos

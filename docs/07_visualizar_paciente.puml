@@ -11,7 +11,7 @@ database "PostgreSQL (Neon)" as DB
 Doctor -> Web : Clic en paciente desde pacientes.html
 Web -> Server : GET /api/pacientes/{id}
 
-Server -> DB : SELECT * FROM pacientes\nWHERE id = $1 AND tenant_id = $2 AND activo = true
+Server -> DB : SELECT * FROM pacientes\nWHERE id = $1 AND id_usuario = $2 AND activo = true
 DB --> Server : datos_paciente
 
 alt paciente existe

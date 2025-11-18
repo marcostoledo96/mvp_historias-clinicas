@@ -12,10 +12,10 @@ Doctor -> Web : Solicita eliminar consulta\n(confirmación modal)
 
 Web -> Server : DELETE /api/consultas/{id}
 
-Server -> DB : SELECT c.* FROM consultas c\n  INNER JOIN pacientes p ON c.id_paciente = p.id\n  WHERE c.id = $1 AND p.tenant_id = $2
+Server -> DB : SELECT c.* FROM consultas c\n  INNER JOIN pacientes p ON c.id_paciente = p.id\n  WHERE c.id = $1 AND p.id_usuario = $2
 DB --> Server : consulta_existente
 
-alt consulta existe en este tenant
+alt consulta existe para este id_usuario
   Server -> DB : DELETE FROM consultas\n  WHERE id = $1
   DB --> Server : OK
   
@@ -29,7 +29,7 @@ end
 
 note over Server, DB
   **Hard delete**: Se elimina permanentemente el registro
-  **Seguridad**: Solo se borran consultas del mismo tenant
+  **Seguridad**: Solo se borran consultas del mismo `id_usuario`
   **Alternativa**: Se podría implementar soft delete con campo 'activo'
 end note
 

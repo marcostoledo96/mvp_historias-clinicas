@@ -12,7 +12,7 @@ Doctor -> Web : Click "Agregar turno" en turno_nuevo.html\n(hora, paciente, obse
 
 Web -> Server : POST /api/turnos\n{ id_paciente, hora, fecha, estado, observaciones }
 
-Server -> DB : INSERT INTO turnos\n(id_paciente, hora, fecha, estado, observaciones, tenant_id)\nVALUES ($1, $2, $3, $4, $5, $6)
+Server -> DB : INSERT INTO turnos\n(id_paciente, hora, fecha, estado, observaciones, id_usuario)\nVALUES ($1, $2, $3, $4, $5, $6)
 DB --> Server : id_turno
 
 Server --> Web : HTTP 201 Created\n{ id: id_turno, mensaje: "Turno creado" }

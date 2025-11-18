@@ -76,7 +76,7 @@ database "Neon (PostgreSQL)" {
     [pacientes\n(multitenancy)]
     [consultas\n(historias clínicas)]
     [turnos\n(FUTURO)]
-    [session\n(cookie-session storage)]
+    [cookie-session\n(sin tabla, datos en cookie)]
   }
 }
 
@@ -101,21 +101,21 @@ note right of [Navegador Web]
 end note
 
 note right of [Serverless Functions]
-  **Backend Stateless:**
+  **Backend (serverless):**
   - Node.js + Express en funciones Vercel
-  - Cookie-session para sesiones (no JWT)
-  - Bcrypt para passwords y respuestas secretas
-  - Multitenancy: tenant_id en todas las tablas
-  - Comentarios en español para defensa académica
+  - Sesión: cookie cifrada (no tabla, no JWT)
+  - Bcrypt para contraseñas y respuesta secreta
+  - Multitenancy: aislamiento por `id_usuario` (cada médico ve sólo lo suyo)
+  - Código comentado en español para defensa
 end note
 
 note right of [Neon (PostgreSQL)]
   **Base de Datos:**
-  - PostgreSQL en Neon (cloud)
-  - Connection pooling automático
-  - Migraciones en /database/migrations/
-  - Tablas con tenant_id para multitenancy
-  - Pregunta secreta para recuperación
+  - PostgreSQL Neon (cloud)
+  - Pool de conexiones (pg)
+  - Migraciones versionadas
+  - Aislamiento: `id_usuario` en pacientes/consultas/turnos
+  - Campos de recuperación (pregunta secreta)
 end note
 
 note bottom of [authController.js]

@@ -16,14 +16,14 @@ Doctor -> Web : Completa formulario:\nfecha, motivo, diagnóstico, prescripcione
 Web -> Server : POST /api/consultas\n{ id_paciente, fecha, motivo, diagnostico,\n  prescripciones, estudios, observaciones }
 
 note right of Server
-  // Verifico que el paciente pertenezca al tenant
+  // Verifico que el paciente pertenezca al mismo usuario (id_usuario)
   // del doctor logueado
 end note
 
-Server -> DB : SELECT id FROM pacientes\nWHERE id = $1 AND tenant_id = $2
+Server -> DB : SELECT id FROM pacientes\nWHERE id = $1 AND id_usuario = $2
 DB --> Server : paciente_existe
 
-alt paciente existe en este tenant
+alt paciente existe para este id_usuario
   Server -> DB : INSERT INTO consultas\n  (id_paciente, fecha, motivo, diagnostico,\n   prescripciones, estudios, observaciones)\n  VALUES ($1, $2, $3, $4, $5, $6, $7)
   DB --> Server : id_consulta
   
@@ -36,7 +36,7 @@ else paciente no existe o no autorizado
 end
 
 note over Server, DB
-  **Multitenancy**: Solo se pueden crear consultas para pacientes del mismo tenant
+  **Multitenancy**: Solo se pueden crear consultas para pacientes del mismo `id_usuario` (aislamiento por usuario)
   **Campos obligatorios**: id_paciente, fecha, motivo
   **Campos opcionales**: prescripciones, estudios, observaciones
 end note

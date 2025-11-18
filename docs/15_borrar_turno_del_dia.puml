@@ -11,11 +11,11 @@ database "PostgreSQL (Neon)" as DB
 Doctor -> Web : Solicita eliminar turno (confirmación modal)
 Web -> Server : DELETE /api/turnos/{id}
 
-Server -> DB : SELECT * FROM turnos\nWHERE id = $1 AND tenant_id = $2
+Server -> DB : SELECT * FROM turnos\nWHERE id = $1 AND id_usuario = $2
 DB --> Server : turno_existente
 
 alt existe
-  Server -> DB : DELETE FROM turnos\n  WHERE id = $1 AND tenant_id = $2
+  Server -> DB : DELETE FROM turnos\n  WHERE id = $1 AND id_usuario = $2
   DB --> Server : OK
   
   Server --> Web : HTTP 200 OK\n  { mensaje: "Turno eliminado" }

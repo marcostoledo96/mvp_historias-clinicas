@@ -27,18 +27,18 @@ Server -> Server : Verifica req.session.usuario.rol === 'admin'
 
 alt usuario es admin
   
-  Server -> DB : SELECT * FROM usuarios\nWHERE email = $1 AND tenant_id = $2
+  Server -> DB : SELECT * FROM usuarios\nWHERE email = $1 AND id_usuario = $2
   DB --> Server : resultado
   
-  alt email no existe en este tenant
+  alt email no existe para este id_usuario
     
     note right of Server
       // Hasheo la contraseña con bcrypt (10 rounds)
-      // y creo el usuario en el tenant actual
+      // y creo el usuario asociado al id_usuario del admin
     end note
     
     Server -> Server : bcrypt.hash(password, 10)
-    Server -> DB : INSERT INTO usuarios\n(nombre, email, password_hash, rol, tenant_id)\nVALUES ($1, $2, $3, $4, $5)
+    Server -> DB : INSERT INTO usuarios\n(nombre, email, password_hash, rol, id_usuario)\nVALUES ($1, $2, $3, $4, $5)
     DB --> Server : id_usuario
     
     Server --> Web : HTTP 201 Created\n{ id_usuario, mensaje: "Usuario creado" }
@@ -56,7 +56,7 @@ end
 
 note over Server, DB
   **Seguridad**: Solo administradores pueden crear usuarios
-  **Multitenancy**: Usuarios creados en el mismo tenant del admin
+  **Multitenancy**: Usuarios creados en el mismo `id_usuario` del admin (aislamiento por usuario)
   **Contraseñas**: Hasheadas con bcrypt antes de guardar
 end note
 

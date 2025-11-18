@@ -184,7 +184,7 @@ POST /api/turnos | PUT /api/turnos/:id | PUT /api/turnos/:id/situacion | DELETE 
 ### Base de datos
 - PostgreSQL en Neon (cloud)
 - Connection pooling automático
-- Todas las tablas tienen `tenant_id` para aislar datos
+  - Todas las tablas incluyen `id_usuario` para aislar datos (multitenancy por usuario)
 - Migraciones versionadas en `/database/migrations/`
 
 ### Frontend
@@ -211,7 +211,7 @@ El frontend se sirve como archivos estáticos y el backend corre como serverless
 
 2. **Pregunta secreta**: Implementamos recuperación de contraseña sin emails. El usuario configura una pregunta y respuesta (hasheada). Para recuperar: ingresa email → ve su pregunta → responde → resetea contraseña.
 
-3. **Multitenancy**: Cada usuario (doctor) tiene su `tenant_id`. Todos los pacientes, consultas y turnos se filtran automáticamente por este ID. Un doctor nunca ve datos de otro.
+3. **Multitenancy**: Cada usuario (doctor) está identificado por `id_usuario`. Todos los pacientes, consultas y turnos se filtran automáticamente por ese campo; un doctor nunca ve datos de otro.
 
 4. **Comentarios en español**: Todo el código backend tiene comentarios detallados en español pensados para que yo pueda explicar cada parte en la defensa.
 

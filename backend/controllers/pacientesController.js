@@ -1,7 +1,7 @@
 const Paciente = require('../models/Paciente');
 
 // Controlador para manejo de pacientes
-// Lógica CRUD de pacientes con aislamiento por usuario (multi-tenant)
+// Lógica CRUD de pacientes con aislamiento por usuario (aislamiento por `id_usuario`)
 const controladorPacientes = {
   // Obtener lista de pacientes (con búsqueda opcional)
   obtenerPacientes: async (req, res) => {

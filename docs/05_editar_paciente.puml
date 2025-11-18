@@ -11,11 +11,11 @@ database "PostgreSQL (Neon)" as DB
 Doctor -> Web : Abre perfil_paciente.html y edita datos
 Web -> Server : PUT /api/pacientes/{id}\n{ nombre, apellido, dni, telefono, email, fecha_nacimiento }
 
-Server -> DB : SELECT * FROM pacientes\nWHERE id = $1 AND tenant_id = $2
+Server -> DB : SELECT * FROM pacientes\nWHERE id = $1 AND id_usuario = $2
 DB --> Server : registro_paciente
 
-alt paciente existe en este tenant
-  Server -> DB : UPDATE pacientes\n  SET nombre = $1, apellido = $2, dni = $3,\n      telefono = $4, email = $5, fecha_nacimiento = $6\n  WHERE id = $7 AND tenant_id = $8
+alt paciente existe para este id_usuario
+  Server -> DB : UPDATE pacientes\n  SET nombre = $1, apellido = $2, dni = $3,\n      telefono = $4, email = $5, fecha_nacimiento = $6\n  WHERE id = $7 AND id_usuario = $8
   DB --> Server : OK
   
   Server --> Web : HTTP 200 OK\n{ mensaje: "Paciente actualizado" }
@@ -27,8 +27,8 @@ else paciente no existe
 end
 
 note over Server, DB
-  **Seguridad**: Solo se actualizan pacientes del mismo tenant
-  **Validación**: DNI debe seguir siendo único en el tenant
+  **Seguridad**: Solo se actualizan pacientes del mismo `id_usuario` (aislamiento por usuario)
+  **Validación**: DNI debe seguir siendo único por `id_usuario`
 end note
 
 @enduml

@@ -51,7 +51,7 @@ end
 note over Server, DB
   **Seguridad**: Las contraseñas se guardan con bcrypt (10 rounds)
   **Sesión**: Usamos cookie-session compatible con Vercel serverless
-  **Multitenancy**: Cada usuario pertenece a un tenant_id
+  **Multitenancy**: Cada usuario pertenece a un `id_usuario` (aislamiento por usuario)
 end note
 
 @enduml

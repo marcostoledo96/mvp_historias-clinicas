@@ -1,6 +1,6 @@
 @startuml
 ' Diagrama 04 - Crear paciente
-' Sistema multitenancy: cada paciente pertenece al tenant del doctor
+' Sistema multitenancy: cada paciente pertenece al doctor (id_usuario)
 title 04 - Crear paciente
 
 actor Doctor
@@ -13,14 +13,14 @@ Web -> Server : POST /api/pacientes\n{ nombre, apellido, dni, fecha_nacimiento, 
 
 note right of Server
   // Verifico autenticación con req.session.usuario
-  // Agrego el tenant_id del usuario logueado
+  // Agrego el id_usuario del usuario logueado
 end note
 
-Server -> DB : SELECT * FROM pacientes\nWHERE dni = $1 AND tenant_id = $2
+Server -> DB : SELECT * FROM pacientes\nWHERE dni = $1 AND id_usuario = $2
 DB --> Server : resultado
 
-alt documento no existe en este tenant
-  Server -> DB : INSERT INTO pacientes\n(nombre, apellido, dni, fecha_nacimiento, telefono, email, tenant_id)\nVALUES ($1, $2, $3, $4, $5, $6, $7)
+alt documento no existe para este usuario
+  Server -> DB : INSERT INTO pacientes\n(nombre, apellido, dni, fecha_nacimiento, telefono, email, id_usuario)\nVALUES ($1, $2, $3, $4, $5, $6, $7)
   DB --> Server : id_paciente
   
   Server --> Web : HTTP 201 Created\n{ id: id_paciente, mensaje: "Paciente creado" }
@@ -32,9 +32,10 @@ else documento duplicado
 end
 
 note over Server, DB
-  **Multitenancy**: Cada paciente se crea en el tenant del doctor
+  **Multitenancy**: Cada paciente pertenece a un doctor específico (id_usuario)
   **Campos opcionales**: email, teléfono adicional
-  **Validación**: DNI único por tenant (no globalmente)
+  **Validación**: DNI único por usuario (no globalmente)
+  **Aislamiento**: Un doctor solo ve/modifica sus propios pacientes
 end note
 
 @enduml

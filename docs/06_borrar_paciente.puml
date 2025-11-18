@@ -11,7 +11,7 @@ database "PostgreSQL (Neon)" as DB
 Doctor -> Web : Solicita eliminar paciente (modal de confirmación)
 Web -> Server : DELETE /api/pacientes/{id}
 
-Server -> DB : SELECT * FROM pacientes\nWHERE id = $1 AND tenant_id = $2
+Server -> DB : SELECT * FROM pacientes\nWHERE id = $1 AND id_usuario = $2
 DB --> Server : paciente_existente
 
 alt paciente existe
@@ -20,7 +20,7 @@ alt paciente existe
     // en lugar de eliminar el registro
   end note
   
-  Server -> DB : UPDATE pacientes\n  SET activo = false\n  WHERE id = $1 AND tenant_id = $2
+  Server -> DB : UPDATE pacientes\n  SET activo = false\n  WHERE id = $1 AND id_usuario = $2
   DB --> Server : OK
   
   Server --> Web : HTTP 200 OK\n{ mensaje: "Paciente eliminado" }

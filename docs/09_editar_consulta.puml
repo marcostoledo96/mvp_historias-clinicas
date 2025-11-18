@@ -12,10 +12,10 @@ Doctor -> Web : Abre consulta existente en consulta.html\ny modifica datos
 
 Web -> Server : PUT /api/consultas/{id}\n{ fecha, motivo, diagnostico,\n  prescripciones, estudios, observaciones }
 
-Server -> DB : SELECT c.* FROM consultas c\n  INNER JOIN pacientes p ON c.id_paciente = p.id\n  WHERE c.id = $1 AND p.tenant_id = $2
+Server -> DB : SELECT c.* FROM consultas c\n  INNER JOIN pacientes p ON c.id_paciente = p.id\n  WHERE c.id = $1 AND p.id_usuario = $2
 DB --> Server : consulta_existente
 
-alt consulta existe en este tenant
+alt consulta existe para este id_usuario
   Server -> DB : UPDATE consultas\n  SET fecha = $1, motivo = $2, diagnostico = $3,\n      prescripciones = $4, estudios = $5, observaciones = $6\n  WHERE id = $7
   DB --> Server : OK
   
@@ -28,7 +28,7 @@ else consulta no existe o no autorizado
 end
 
 note over Server, DB
-  **Seguridad**: Solo se editan consultas del mismo tenant (vía JOIN)
+  **Seguridad**: Solo se editan consultas del mismo `id_usuario` (vía JOIN)
   **Auditoría**: Se podría agregar campo updated_at para tracking
 end note
 

@@ -156,6 +156,41 @@ Tablas principales:
 
 También hay índices para rendimiento y triggers para actualizar automáticamente `fecha_modificacion` en consultas y turnos.
 
+### 4.4. Guía para presentar el diagrama de arquitectura
+
+Esta guía te permite explicar la imagen generada de `docs/Arquitectura.puml` en 2–3 minutos de forma clara para alguien no técnico.
+
+1. Objetivo (frase inicial)
+  “Este diagrama muestra cómo el navegador se conecta con funciones serverless en Vercel que hablan con PostgreSQL, todo aislado por usuario.”
+
+2. Recorrido rápido por capas (orden sugerido)
+  a. Cliente (Navegador) → HTML/CSS/JS simples (sin frameworks).
+  b. Fetch API → llamadas a `/api/...` (REST + JSON).
+  c. Funciones serverless Express → Middlewares → Controladores → Modelos.
+  d. Modelos → Base de datos PostgreSQL (Neon).
+  e. Multitenancy: campo `id_usuario` presente en pacientes, consultas y turnos filtra todo.
+
+3. Puntos clave a destacar (usa frases cortas)
+  - “Sesiones: usamos una cookie cifrada, no guardamos sesión en una tabla ni usamos JWT.”
+  - “Seguridad: contraseñas y respuesta secreta hasheadas con bcrypt.”
+  - “Aislamiento: cada consulta SQL incluye el `id_usuario`.”
+  - “Escalable: el módulo de turnos ya está preparado aunque la UI no lo use todavía.”
+  - “Simplicidad: JavaScript puro en frontend para foco en lógica médica.”
+
+4. Ejemplo de mini script (puedes memorizarlo)
+  “Arranco en el navegador: HTML, CSS y JavaScript simples. Cada acción del usuario dispara un fetch a la API `/api/*`. Esas rutas viven como funciones serverless en Vercel corriendo Express. Primero pasan por middlewares (autenticación y validaciones), luego llegan a controladores que llaman modelos. Los modelos ejecutan SQL parametrizado en PostgreSQL Neon. Como cada tabla tiene `id_usuario`, un médico sólo ve sus propios pacientes y consultas. La sesión es una cookie segura, sin necesidad de base de datos ni tokens JWT, y las contraseñas y la pregunta secreta están hasheadas con bcrypt. Turnos está diseñado como módulo futuro, pero no bloquea el MVP.”
+
+5. Preguntas frecuentes que puede hacer el profesor
+  - ¿Por qué cookie-session y no JWT? → “Menos complejidad para este alcance y funciona bien en serverless.”
+  - ¿Dónde se guarda la sesión? → “Sólo en la cookie cifrada, no hay tabla de sesiones.”
+  - ¿Cómo se evita que un médico vea datos de otro? → “Todas las consultas SQL filtran por `id_usuario`.”
+  - ¿Qué pasa si se agrega más lógica? → “Se suma otro controlador y modelo manteniendo el mismo flujo.”
+
+6. Cierre (una línea)
+  “La arquitectura prioriza simplicidad, aislamiento por usuario y seguridad básica suficiente para un MVP académico.”
+
+Tip: Mientras explicás, señalá con el cursor o puntero cada bloque siguiendo el recorrido de arriba para que visualmente siga tu relato.
+
 ---
 
 ## 5. Estructura del proyecto (para mostrar en la defensa)

@@ -12,11 +12,11 @@ Doctor -> Web : Selecciona turno en turno_editar.html\ny modifica hora/estado
 
 Web -> Server : PUT /api/turnos/{id}\n{ hora, estado, observaciones }
 
-Server -> DB : SELECT * FROM turnos\nWHERE id = $1 AND tenant_id = $2
+Server -> DB : SELECT * FROM turnos\nWHERE id = $1 AND id_usuario = $2
 DB --> Server : turno_actual
 
 alt turno existe
-  Server -> DB : UPDATE turnos\n  SET hora = $1, estado = $2, observaciones = $3\n  WHERE id = $4 AND tenant_id = $5
+  Server -> DB : UPDATE turnos\n  SET hora = $1, estado = $2, observaciones = $3\n  WHERE id = $4 AND id_usuario = $5
   DB --> Server : OK
   
   Server --> Web : HTTP 200 OK\n  { mensaje: "Turno actualizado" }
