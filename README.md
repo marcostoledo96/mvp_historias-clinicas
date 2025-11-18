@@ -11,8 +11,7 @@ Trabajo grupal realizado por:
 
 ## Demo
 
-- Producción: `https://tu-proyecto.vercel.app` (ejemplo)
-- Usuarios demo (solo para pruebas locales; en producción cambiarlos):
+- Producción: https://mvp-historias-clinicas.vercel.app/
   - Doctor: `doctor@clinica.com` / `password123`
   - Admin: `admin@clinica.com` / `password123`
 
@@ -170,17 +169,12 @@ POST /api/turnos | PUT /api/turnos/:id | PUT /api/turnos/:id/situacion | DELETE 
 ## Características técnicas
 
 ### Autenticación
-- Usamos `cookie-session` en lugar de JWT (más simple para Vercel serverless)
-- Las contraseñas se hashean con bcrypt (10 rounds)
-- La recuperación de contraseña usa pregunta secreta (también hasheada)
-- Sesiones de 7 días por defecto, 30 días si marcas "Recordarme"
+ Sesiones: la cookie tiene un `maxAge` configurado por defecto en el servidor (24 horas). Si se implementa "Recordarme" se puede ampliar (por ejemplo a 30 días) ajustando `req.sessionOptions.maxAge` al crear la sesión.
 
-### Seguridad
-- Multitenancy: aislamiento por usuario (filtro por `id_usuario` en consultas)
-- DNI único por usuario
-- Middlewares `verificarAuth` y `verificarAdmin`
+ Eliminación de paciente: se utiliza "soft delete" (campo `activo = false`) para preservar la historia clínica; las consultas asociadas se mantienen para auditoría y trazabilidad.
 - Eliminación de paciente: borra el paciente y sus consultas asociadas (cascade)
 
+    20251026_create_session_table.sql  # archivo incluido; opcional: el proyecto usa `cookie-session` por defecto (sin tabla de sesiones)
 ### Base de datos
 - PostgreSQL en Neon (cloud)
 - Connection pooling automático
