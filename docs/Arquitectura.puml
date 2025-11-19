@@ -20,7 +20,7 @@ node "Cliente Web (Doctor)" {
 }
 
 ' --- VERCEL SERVERLESS ---
-cloud "Vercel Platform" {
+cloud "Vercel Platform" {+
   
   node "Frontend Hosting" {
     [Archivos estáticos\n(HTML/CSS/JS)]
