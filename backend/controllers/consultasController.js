@@ -8,7 +8,7 @@ const controladorConsultas = {
   obtenerConsultas: async (req, res) => {
     try {
       const { fecha, paciente } = req.query;
-      const idUsuario = req.session?.usuario?.id;
+      const idUsuario = req.user?.id;
       if (!idUsuario) return res.status(401).json({ error: 'No autenticado' });
       
       let consultas;
@@ -32,7 +32,7 @@ const controladorConsultas = {
   obtenerConsultaPorId: async (req, res) => {
     try {
       const { id } = req.params;
-      const idUsuario = req.session?.usuario?.id;
+      const idUsuario = req.user?.id;
       if (!idUsuario) return res.status(401).json({ error: 'No autenticado' });
       const consulta = await Consulta.buscarPorId(id, idUsuario);
 
@@ -52,7 +52,7 @@ const controladorConsultas = {
   obtenerConsultasPorPaciente: async (req, res) => {
     try {
       const { id_paciente } = req.params;
-      const idUsuario = req.session?.usuario?.id;
+      const idUsuario = req.user?.id;
       if (!idUsuario) return res.status(401).json({ error: 'No autenticado' });
       const consultas = await Consulta.obtenerPorPaciente(id_paciente, idUsuario);
 
@@ -67,7 +67,7 @@ const controladorConsultas = {
   // * Crea una nueva consulta (requiere id_paciente y motivo_consulta)
   crearConsulta: async (req, res) => {
     try {
-      const idUsuario = req.session?.usuario?.id;
+      const idUsuario = req.user?.id;
       if (!idUsuario) return res.status(401).json({ error: 'No autenticado' });
       const {
         id_paciente, fecha, hora, motivo_consulta, informe_medico,
@@ -102,7 +102,7 @@ const controladorConsultas = {
   actualizarConsulta: async (req, res) => {
     try {
       const { id } = req.params;
-      const idUsuario = req.session?.usuario?.id;
+      const idUsuario = req.user?.id;
       if (!idUsuario) return res.status(401).json({ error: 'No autenticado' });
       const {
         motivo_consulta, informe_medico, diagnostico, tratamiento, estudios, archivo_adjunto
@@ -139,7 +139,7 @@ const controladorConsultas = {
   eliminarConsulta: async (req, res) => {
     try {
       const { id } = req.params;
-      const idUsuario = req.session?.usuario?.id;
+      const idUsuario = req.user?.id;
       if (!idUsuario) return res.status(401).json({ error: 'No autenticado' });
       const consultaEliminada = await Consulta.eliminar(id, idUsuario);
       
@@ -160,7 +160,7 @@ const controladorConsultas = {
   obtenerConsultasPorFecha: async (req, res) => {
     try {
       const { fecha } = req.params;
-      const idUsuario = req.session?.usuario?.id;
+      const idUsuario = req.user?.id;
       if (!idUsuario) return res.status(401).json({ error: 'No autenticado' });
       const consultas = await Consulta.buscarPorFecha(fecha, idUsuario);
 

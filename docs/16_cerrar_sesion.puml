@@ -1,18 +1,40 @@
 @startuml
-' Diagrama 16 - Cerrar sesión
+' Diagrama 16 - Cerrar sesión (JWT)
 title 16 - Cerrar sesión
+
 actor Doctor
 participant "Sistema Web" as Web
 participant "Servidor (API REST)" as Server
 
 Doctor -> Web : Clic en "Cerrar sesión"
-Web -> Server : POST /logout { token }
-Server -> Server : Invalida token (blacklist) o lo elimina
-alt token válido
-  Server --> Web : HTTP 200 OK { mensaje: "Sesión cerrada" }
-  Web --> Doctor : Redirige a login
-else token inválido/expirado
-  Server --> Web : HTTP 401 Unauthorized { error: "Sesión no válida" }
-  Web --> Doctor : Redirige a login
-end
+
+note right of Web
+  // Cliente notifica al servidor (opcional con JWT)
+  // y luego elimina tokens localmente
+end note
+
+Web -> Server : POST /api/auth/logout\nAuthorization: Bearer <token>
+
+note right of Server
+  // Con JWT stateless, no hay sesión que invalidar en servidor
+  // Se puede registrar el logout para auditoría
+end note
+
+Server --> Web : HTTP 200 OK\n{ mensaje: "Sesión cerrada exitosamente" }
+
+note right of Web
+  // Cliente elimina tokens de localStorage
+  // localStorage.removeItem('accessToken')
+  // localStorage.removeItem('refreshToken')
+end note
+
+Web -> Web : Limpiar localStorage (tokens)
+Web --> Doctor : Redirige a index.html (login)
+
+note over Web, Server
+  **Cierre de sesión JWT**: El servidor no mantiene estado de sesión.
+  La invalidación real ocurre en el cliente al eliminar los tokens.
+  Opcionalmente se puede implementar blacklist de tokens en servidor.
+end note
+
 @enduml

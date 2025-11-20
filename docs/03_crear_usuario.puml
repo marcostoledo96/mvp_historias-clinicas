@@ -16,14 +16,15 @@ note right of Web
 end note
 
 Admin -> Web : Completa formulario:\nnombre, email, password, rol
-Web -> Server : POST /api/auth/registro\n{ nombre_completo, email, password, rol }
+Web -> Server : POST /api/auth/registro\nAuthorization: Bearer <token>\n{ nombre_completo, email, password, rol }
 
 note right of Server
-  // Verifico que el usuario logueado sea admin
-  // usando el middleware verificarAdmin()
+  // Verifico JWT y que el rol sea admin
+  // usando middlewares verificarAuth + verificarAdmin
 end note
 
-Server -> Server : Verifica req.session.usuario.rol === 'admin'
+Server -> Server : jwt.verify(token, JWT_SECRET)
+Server -> Server : Verifica req.user.rol === 'admin'
 
 alt usuario es admin
   

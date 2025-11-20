@@ -11,12 +11,14 @@ database "PostgreSQL (Neon)" as DB
 == Visualizar perfil ==
 
 Doctor -> Web : Accede a configuracion.html
-Web -> Server : GET /api/auth/perfil
+Web -> Server : GET /api/auth/perfil\nAuthorization: Bearer <token>
 
 note right of Server
-  // Obtengo el id del usuario desde req.session.usuario
+  // Obtengo el id del usuario desde req.user (JWT)
   // Devuelvo sus datos (pero NO la contraseña)
 end note
+
+Server -> Server : jwt.verify(token, JWT_SECRET)
 
 Server -> DB : SELECT id, nombre, email, rol, pregunta_secreta\nFROM usuarios\nWHERE id = $1
 DB --> Server : datos_usuario
@@ -27,12 +29,14 @@ Web --> Doctor : Muestra datos en formulario
 == Editar perfil ==
 
 Doctor -> Web : Modifica nombre y/o email
-Web -> Server : PUT /api/auth/perfil\n{ nombre, email }
+Web -> Server : PUT /api/auth/perfil\nAuthorization: Bearer <token>\n{ nombre, email }
 
 note right of Server
-  // Verifico que el usuario esté logueado
+  // Verifico JWT con verificarAuth
   // Actualizo solo los campos que puede cambiar
 end note
+
+Server -> Server : jwt.verify(token, JWT_SECRET)
 
 Server -> DB : SELECT * FROM usuarios\nWHERE email = $1 AND id != $2
 DB --> Server : resultado
@@ -42,11 +46,9 @@ alt email disponible (o sin cambios)
   DB --> Server : OK
   
   note right of Server
-    // Actualizo también la sesión para que
-    // el header muestre el nuevo nombre
+    // Los cambios se reflejan inmediatamente
+    // El próximo token refresh incluirá los nuevos datos
   end note
-  
-  Server -> Server : req.session.usuario.nombre = nombre\nreq.session.usuario.email = email
   
   Server --> Web : HTTP 200 OK\n{ usuario: { nombre, email, rol } }
   Web --> Doctor : Muestra confirmación y actualiza header
@@ -60,7 +62,7 @@ note over Server, DB
   **Seguridad**: Usuario solo puede editar sus propios datos
   **Campos editables**: nombre, email (rol NO es editable)
   **Validación**: Email debe ser único en el sistema
-  **Sesión actualizada**: Los cambios se reflejan inmediatamente
+  **JWT**: Los cambios se reflejan cuando el token se renueva
 end note
 
 @enduml

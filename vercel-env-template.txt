@@ -5,8 +5,11 @@
 # Base de datos (usar tu URL de Supabase)
 DATABASE_URL=postgresql://postgres.tuproyecto:tupassword@aws-1-us-east-2.pooler.supabase.com:5432/postgres?sslmode=require
 
-# Sesiones y seguridad
-SESSION_SECRET=historias_clinicas_secret_2024_muy_seguro_123
+# JWT Configuration (Autenticación con JSON Web Tokens)
+JWT_SECRET=historias_clinicas_jwt_secret_produccion_cambiar_por_valor_seguro
+JWT_EXPIRES_IN=1h
+JWT_REFRESH_SECRET=historias_clinicas_refresh_secret_produccion_cambiar_por_valor_seguro
+JWT_REFRESH_EXPIRES_IN=7d
 
 # Entorno de producción
 NODE_ENV=production

@@ -1,10 +1,8 @@
 // Servidor principal del backend
-// Configura Express, CORS, sesiones, rutas y sirve el frontend
+// Configura Express, CORS, rutas y sirve el frontend
 
 const express = require('express');
 const cors = require('cors');
-// Sesiones basadas en cookies (compatibles con serverless)
-const cookieSession = require('cookie-session');
 const path = require('path');
 const { exec } = require('child_process');
 require('dotenv').config();
@@ -16,12 +14,12 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Confiar en el proxy (Vercel/Heroku/NGINX) para cookies secure
+// Confiar en el proxy (Vercel/Heroku/NGINX) para headers
 if (process.env.VERCEL || process.env.NODE_ENV === 'production') {
   app.set('trust proxy', 1);
 }
 
-// CORS con credenciales (cookies)
+// CORS con credenciales para headers Authorization
 // Política: en desarrollo permitir localhost/127.0.0.1 en cualquier puerto; en producción, whitelist explícito
 const isDev = process.env.NODE_ENV !== 'production';
 const allowedOrigins = [
@@ -53,16 +51,6 @@ app.options('*', cors({ origin: corsOrigin, credentials: true }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Sesiones con cookie-session: stateless, ideales para Vercel
-app.use(cookieSession({
-  name: 'session',
-  keys: [process.env.SESSION_SECRET || 'historias_clinicas_secret'],
-  // Por defecto, 24h; se puede ajustar por-request via req.sessionOptions.maxAge
-  maxAge: 24 * 60 * 60 * 1000,
-  secure: process.env.NODE_ENV === 'production',
-  sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-}));
-
 // Archivos estáticos del frontend
 app.use(express.static(path.join(__dirname, '../frontend')));
 
@@ -77,13 +65,9 @@ app.get('/api/health', (req, res) => {
 });
 
 // Redirección amable para ruta obsoleta de registro
+// (Redirige siempre a configuracion.html, ya que con JWT el rol se verifica en el cliente)
 app.get('/registro.html', (req, res) => {
-  const rol = req.session?.usuario?.rol;
-  if (rol === 'admin') {
-    return res.redirect('/configuracion.html');
-  }
-  // No admin o no autenticado: volver al login
-  return res.redirect('/index.html');
+  return res.redirect('/configuracion.html');
 });
 
 // Rutas

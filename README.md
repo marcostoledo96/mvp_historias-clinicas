@@ -16,7 +16,7 @@ Credenciales de demo (solo entorno local/development):
 
 ## Resumen del alcance (MVP)
 
-- Login con sesiones basadas en cookies (`cookie-session`).
+- Login seguro con autenticación JWT (JSON Web Tokens) con access y refresh tokens.
 - CRUD de pacientes (soft delete, historial mantenido).
 - Registro y consulta de consultas médicas por paciente.
 - Endpoints de turnos preparados (UI no incluida en el MVP).
@@ -35,7 +35,10 @@ Credenciales de demo (solo entorno local/development):
 
 ```env
 DATABASE_URL=postgres://<USER>:<PASSWORD>@<HOST>/<DB>?sslmode=require
-SESSION_SECRET=<cadena-aleatoria-larga>
+JWT_SECRET=<cadena-aleatoria-larga-para-jwt>
+JWT_EXPIRES_IN=1h
+JWT_REFRESH_SECRET=<cadena-aleatoria-diferente-para-refresh>
+JWT_REFRESH_EXPIRES_IN=7d
 PORT=3000
 ```
 
@@ -95,9 +98,10 @@ database/
 
 Autenticación:
 ```
-POST /api/auth/login
-POST /api/auth/logout
-GET /api/auth/verificar
+POST /api/auth/login           # Devuelve access y refresh tokens
+POST /api/auth/logout          # Invalidación lógica (cliente borra tokens)
+POST /api/auth/refresh         # Renueva access token con refresh token
+GET /api/auth/verificar        # Verifica validez del token actual
 POST /api/auth/registro (admin)
 GET/PUT /api/auth/perfil
 PUT /api/auth/password
@@ -130,18 +134,18 @@ Turnos (futuro): rutas existentes en la API; UI pendiente.
 
 ## Detalles técnicos relevantes
 
-- Autenticación: `cookie-session` (cookie cifrada). Por defecto se crea la cookie con `maxAge` = 24 horas; se puede ampliar para un "Recordarme".
+- Autenticación: JWT (JSON Web Tokens) almacenados en `localStorage` del cliente. Los tokens se envían en cada petición mediante el header `Authorization: Bearer <token>`. Access tokens válidos por 1 hora (configurable), refresh tokens por 7 días (configurable).
 - Contraseñas y respuesta secreta: hasheadas con `bcrypt` (10 salt rounds).
 - Multitenancy: todas las tablas relevantes incluyen `id_usuario` y las consultas filtran por ese campo.
 - Eliminación de paciente: se aplica soft delete (`activo = false`); las consultas relacionadas se preservan para auditoría y trazabilidad.
 - SQL: consultas parametrizadas para evitar inyección.
 
-Nota: en `database/migrations/` existe `20251026_create_session_table.sql` por si se desea almacenar sesiones en BD, pero actualmente la app usa `cookie-session` sin tabla de sesiones por defecto.
+Nota: el sistema no requiere tabla de sesiones en la base de datos, ya que JWT es stateless.
 
 ## Despliegue (Vercel)
 
 1. Importar el repo en Vercel.
-2. Configurar variables de entorno: `DATABASE_URL`, `SESSION_SECRET`.
+2. Configurar variables de entorno: `DATABASE_URL`, `JWT_SECRET`, `JWT_REFRESH_SECRET` y las variables `JWT_EXPIRES_IN`, `JWT_REFRESH_EXPIRES_IN` (opcional, tienen valores por defecto).
 3. Deploy: el frontend se sirve estático y el backend corre como funciones serverless.
 
 ## Notas para demo / defensa
@@ -187,7 +191,7 @@ Usuarios de prueba (solo para demo local):
 
 ## Qué incluye este MVP
 
-- Login seguro con sesiones basadas en cookies (compatible con Vercel serverless).
+- Login seguro con autenticación JWT (JSON Web Tokens) con access y refresh tokens.
 - Gestión de pacientes: crear, editar, ver historial y eliminar (soft delete).
 - Registro de consultas médicas (historia clínica por paciente).
 - Módulo de turnos preparado a nivel de API/DB (UI no incluida en MVP).
@@ -206,7 +210,10 @@ Usuarios de prueba (solo para demo local):
 
 ```env
 DATABASE_URL=postgres://<USER>:<PASSWORD>@<HOST>/<DB>?sslmode=require
-SESSION_SECRET=<cadena-aleatoria-larga>
+JWT_SECRET=<cadena-aleatoria-larga-para-tokens>
+JWT_REFRESH_SECRET=<cadena-aleatoria-diferente-para-refresh>
+JWT_EXPIRES_IN=1h
+JWT_REFRESH_EXPIRES_IN=7d
 PORT=3000
 ```
 
@@ -291,18 +298,18 @@ Turnos (futuro): rutas disponibles en la API, UI pendiente.
 
 ## Detalles técnicos relevantes (breve)
 
-- Autenticación: uso `cookie-session` (cookie cifrada). En el servidor la cookie se crea con `maxAge` por defecto (24 horas). Si necesitás "Recordarme" se puede ampliar la duración al crear la sesión.
+- Autenticación: implementamos JWT (JSON Web Tokens) stateless almacenados en `localStorage` del cliente. Los tokens se envían en cada petición mediante el header `Authorization: Bearer <token>`. Access tokens válidos por 1 hora, refresh tokens por 7 días (ambos configurables).
 - Contraseñas y respuesta secreta: hasheadas con `bcrypt` (10 rounds).
 - Multitenancy: usamos `id_usuario` en las consultas SQL para asegurar que cada médico solo acceda a sus propios pacientes y consultas.
 - Eliminación de paciente: implementé soft delete (`activo = false`) para preservar la historia clínica y facilitar auditoría.
 - SQL: todas las consultas usan parámetros (`$1`, `$2`, ...) para evitar inyección.
 
-Nota sobre migraciones: en `database/migrations/` hay un archivo `20251026_create_session_table.sql`; está incluido por si se desea guardar sesiones en la BD, pero por defecto la app usa `cookie-session` sin tabla.
+Nota sobre migraciones: el sistema JWT no requiere tabla de sesiones en la base de datos.
 
 ## Despliegue en Vercel (rápido)
 
 1. Importá el repo en Vercel.
-2. Configurá las variables de entorno (`DATABASE_URL`, `SESSION_SECRET`).
+2. Configurá las variables de entorno (`DATABASE_URL`, `JWT_SECRET`, `JWT_REFRESH_SECRET`).
 3. Deploy: el frontend se sirve como estático y el backend corre como funciones serverless.
 
 ## Notas para la demo / defensa
@@ -346,7 +353,7 @@ Trabajo grupal realizado por:
 ## Alcance del MVP
 
 Este MVP permite:
-- Autenticación segura con sesiones basadas en cookies (compatible con Vercel serverless)
+- Autenticación segura con JWT (JSON Web Tokens) con access y refresh tokens
 - Gestión completa de pacientes (crear, editar, ver historial, eliminar)
 - Registro de consultas médicas (historia clínica de cada paciente)
 - Sistema de turnos (no MVP; endpoints disponibles, UI no incluida)
@@ -361,11 +368,14 @@ Este MVP permite:
 
 ## Instalación rápida
 
-- Variables de entorno (no publiques tu `DATABASE_URL` ni `SESSION_SECRET`):
+- Variables de entorno (no publiques tu `DATABASE_URL` ni tus secrets JWT):
   - Crear `backend/.env` usando placeholders:
     ```env
     DATABASE_URL=postgres://<USER>:<PASSWORD>@<HOST>/<DB>?sslmode=require
-    SESSION_SECRET=<cadena-aleatoria-larga>
+    JWT_SECRET=<cadena-aleatoria-larga>
+    JWT_REFRESH_SECRET=<otra-cadena-aleatoria>
+    JWT_EXPIRES_IN=1h
+    JWT_REFRESH_EXPIRES_IN=7d
     PORT=3000
     ```
   - También podés usar `vercel-env-template.txt` como referencia.
@@ -497,12 +507,15 @@ POST /api/turnos | PUT /api/turnos/:id | PUT /api/turnos/:id/situacion | DELETE 
 ## Características técnicas
 
 ### Autenticación
- Sesiones: la cookie tiene un `maxAge` configurado por defecto en el servidor (24 horas). Si se implementa "Recordarme" se puede ampliar (por ejemplo a 30 días) ajustando `req.sessionOptions.maxAge` al crear la sesión.
+- Sistema JWT stateless: access tokens (1 hora) y refresh tokens (7 días configurable)
+- Tokens almacenados en localStorage del cliente
+- Header Authorization: Bearer <token> en cada petición autenticada
+- Renovación automática de tokens mediante endpoint /api/auth/refresh
 
  Eliminación de paciente: se utiliza "soft delete" (campo `activo = false`) para preservar la historia clínica; las consultas asociadas se mantienen para auditoría y trazabilidad.
 - Eliminación de paciente: borra el paciente y sus consultas asociadas (cascade)
 
-    20251026_create_session_table.sql  # archivo incluido; opcional: el proyecto usa `cookie-session` por defecto (sin tabla de sesiones)
+    20251026_create_session_table.sql  # archivo incluido; opcional: el proyecto usa `JWT` por defecto (sin tabla de sesiones)
 ### Base de datos
 - PostgreSQL en Neon (cloud)
 - Connection pooling automático
@@ -522,14 +535,14 @@ El proyecto está configurado para Vercel con `vercel.json`.
 
 Pasos:
 1. Importá el repo en Vercel (usa `vercel.json`).
-2. Configurá variables de entorno: `DATABASE_URL`, `SESSION_SECRET` (no publiques sus valores).
+2. Configurá variables de entorno: `DATABASE_URL`, `JWT_SECRET`, `JWT_REFRESH_SECRET` (no publiques sus valores).
 3. Deploy; el frontend se sirve como estático y el backend como función serverless.
 
 El frontend se sirve como archivos estáticos y el backend corre como serverless functions.
 
 ## Notas para demo/defensa
 
-1. **Autenticación simplificada**: Usamos cookie-session en lugar de JWT porque es más simple de explicar y funciona perfecto con serverless. Todo el flujo está comentado en español.
+1. **Autenticación moderna**: Implementamos JWT (JSON Web Tokens) porque es el estándar actual para APIs REST stateless. Los tokens se almacenan en localStorage del cliente y se envían en el header Authorization de cada petición. El sistema incluye renovación automática con refresh tokens.
 
 2. **Pregunta secreta**: Implementamos recuperación de contraseña sin emails. El usuario configura una pregunta y respuesta (hasheada). Para recuperar: ingresa email → ve su pregunta → responde → resetea contraseña.
 

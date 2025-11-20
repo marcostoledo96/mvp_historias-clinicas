@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     const data = Object.fromEntries(new FormData(form).entries());
     try {
-      const resp = await fetch('/api/auth/registro', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify(data) });
+      const resp = await fetchConAuth('/api/auth/registro', { method: 'POST', body: JSON.stringify(data) });
       const result = await resp.json();
       if (resp.ok) {
         mostrarAlerta('Usuario creado', 'success');

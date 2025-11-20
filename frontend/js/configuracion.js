@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 async function cargarPerfil() {
   try {
-    const resp = await fetch('/api/auth/perfil', { credentials: 'include' });
+    const resp = await fetchConAuth('/api/auth/perfil');
     if (!resp.ok) return manejarErrorAPI(null, resp);
     const data = await resp.json();
     const form = document.getElementById('form-perfil');
@@ -43,8 +43,8 @@ function configurarFormularios() {
     const data = Object.fromEntries(new FormData(formPerfil).entries());
     try {
       setButtonLoading('btn-guardar-perfil', true);
-      const resp = await fetch('/api/auth/perfil', {
-        method: 'PUT', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify(data)
+      const resp = await fetchConAuth('/api/auth/perfil', {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data)
       });
       const result = await resp.json();
       if (resp.ok) {
@@ -69,8 +69,8 @@ function configurarFormularios() {
     // ? Podrías validar reglas de fortaleza aquí (largo mínimo, mayúsculas, símbolos, etc.)
     try {
       setButtonLoading('btn-guardar-password', true);
-      const resp = await fetch('/api/auth/password', {
-        method: 'PUT', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify(data)
+      const resp = await fetchConAuth('/api/auth/password', {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data)
       });
       const result = await resp.json();
       if (resp.ok) {
@@ -96,10 +96,9 @@ function configurarFormularios() {
     
     try {
       setButtonLoading('btn-guardar-pregunta', true);
-      const resp = await fetch('/api/auth/pregunta-secreta/configurar', {
+      const resp = await fetchConAuth('/api/auth/pregunta-secreta/configurar', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify(data)
       });
       const result = await resp.json();
@@ -146,10 +145,9 @@ function prepararAdmin() {
     const data = Object.fromEntries(new FormData(formCrear).entries());
     try {
       setButtonLoading('btn-crear-usuario', true);
-      const resp = await fetch('/api/auth/registro', {
+      const resp = await fetchConAuth('/api/auth/registro', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify(data)
       });
       const result = await resp.json();

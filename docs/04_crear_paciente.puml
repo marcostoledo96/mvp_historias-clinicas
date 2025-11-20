@@ -9,30 +9,46 @@ participant "Servidor (API REST)" as Server
 database "PostgreSQL (Neon)" as DB
 
 Doctor -> Web : Completa formulario en paciente_crear.html
-Web -> Server : POST /api/pacientes\n{ nombre, apellido, dni, fecha_nacimiento, telefono, email }
+Web -> Server : POST /api/pacientes\nAuthorization: Bearer <token>\n{ nombre, apellido, dni, fecha_nacimiento, telefono, email }
 
 note right of Server
-  // Verifico autenticación con req.session.usuario
-  // Agrego el id_usuario del usuario logueado
+  // Verifico JWT en middleware verificarAuth
+  // Token decodificado disponible en req.user
+  // Extraigo id_usuario de req.user.id
 end note
 
-Server -> DB : SELECT * FROM pacientes\nWHERE dni = $1 AND id_usuario = $2
-DB --> Server : resultado
+Server -> Server : jwt.verify(token, JWT_SECRET)
 
-alt documento no existe para este usuario
-  Server -> DB : INSERT INTO pacientes\n(nombre, apellido, dni, fecha_nacimiento, telefono, email, id_usuario)\nVALUES ($1, $2, $3, $4, $5, $6, $7)
-  DB --> Server : id_paciente
+alt token válido
+  Server -> DB : SELECT * FROM pacientes\nWHERE dni = $1 AND id_usuario = $2
+  DB --> Server : resultado
   
-  Server --> Web : HTTP 201 Created\n{ id: id_paciente, mensaje: "Paciente creado" }
-  Web --> Doctor : Redirige a perfil_paciente.html?id=...
+  alt documento no existe para este usuario
+    Server -> DB : INSERT INTO pacientes\n(nombre, apellido, dni, fecha_nacimiento, telefono, email, id_usuario)\nVALUES ($1, $2, $3, $4, $5, $6, $7)
+    DB --> Server : id_paciente
+    
+    Server --> Web : HTTP 201 Created\n{ id: id_paciente, mensaje: "Paciente creado" }
+    Web --> Doctor : Redirige a perfil_paciente.html?id=...
+    
+  else documento duplicado
+    Server --> Web : HTTP 409 Conflict\n{ error: "Paciente ya registrado en tu consultorio" }
+    Web --> Doctor : Muestra alerta
+  end
+
+else token inválido o expirado
+  Server --> Web : HTTP 401 Unauthorized\n{ codigo: "TOKEN_EXPIRADO" }
   
-else documento duplicado
-  Server --> Web : HTTP 409 Conflict\n{ error: "Paciente ya registrado en tu consultorio" }
-  Web --> Doctor : Muestra alerta
+  note right of Web
+    // Cliente detecta token expirado
+    // Intenta renovar con refresh token
+  end note
+  
+  Web --> Doctor : Solicita renovación o redirige a login
 end
 
 note over Server, DB
   **Multitenancy**: Cada paciente pertenece a un doctor específico (id_usuario)
+  **Autenticación JWT**: Token enviado en header Authorization: Bearer <token>
   **Campos opcionales**: email, teléfono adicional
   **Validación**: DNI único por usuario (no globalmente)
   **Aislamiento**: Un doctor solo ve/modifica sus propios pacientes

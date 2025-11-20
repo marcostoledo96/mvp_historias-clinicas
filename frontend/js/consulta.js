@@ -54,7 +54,7 @@ async function inicializarNuevaConsulta(idPaciente) {
 
 async function cargarConsulta(id) {
   try {
-    const resp = await fetch(`/api/consultas/${id}`, { credentials: 'include' });
+    const resp = await fetchConAuth(`/api/consultas/${id}`);
     if (!resp.ok) return manejarErrorAPI(null, resp);
     const c = await resp.json();
 
@@ -110,9 +110,8 @@ function configurarEventosConsulta(opts = {}) {
       if (!confirm('¿Estás seguro de eliminar esta consulta? Esta acción no se puede deshacer.')) return;
       
       try {
-        const resp = await fetch(`/api/consultas/${idConsulta}`, {
-          method: 'DELETE',
-          credentials: 'include'
+        const resp = await fetchConAuth(`/api/consultas/${idConsulta}`, {
+          method: 'DELETE'
         });
         
         if (resp.ok) {
@@ -161,12 +160,12 @@ function configurarEventosConsulta(opts = {}) {
         const payload = { ...data, id_paciente: pid };
         // Si no se completó la fecha, setear hoy por defecto
         if (!payload.fecha) payload.fecha = obtenerFechaHoyLocal();
-        resp = await fetch('/api/consultas', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify(payload)
+        resp = await fetchConAuth('/api/consultas', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
         });
       } else {
-        resp = await fetch(`/api/consultas/${idConsulta}`, {
-          method: 'PUT', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify(data)
+        resp = await fetchConAuth(`/api/consultas/${idConsulta}`, {
+          method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data)
         });
       }
       const result = await resp.json();
@@ -270,7 +269,7 @@ async function autocompletarDesdePaciente(form) {
   try {
     const id = form?.dataset?.idPaciente;
     if (!id) return;
-    const resp = await fetch(`/api/pacientes/${id}`, { credentials: 'include' });
+    const resp = await fetchConAuth(`/api/pacientes/${id}`);
     if (!resp.ok) return; // si falla, no bloqueamos la vista de consulta
     const p = await resp.json();
 

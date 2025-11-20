@@ -185,13 +185,17 @@ function getURLParams() {
 // Función para manejar errores de API
 // * manejarErrorAPI(error, response)
 // * Estrategia estandar para manejar respuestas HTTP y errores de red.
-// ? 401 → redirige a login; 403/404/5xx muestran alerta contextual.
+// ? 401 → redirige a login (sesión JWT expirada); 403/404/5xx muestran alerta contextual.
 function manejarErrorAPI(error, response = null) {
   console.error('Error API:', error);
   
   if (response) {
     if (response.status === 401) {
-      mostrarAlerta('Sesión expirada. Por favor, inicia sesión nuevamente.', 'error');
+      // Limpiar tokens JWT y redirigir
+      if (typeof limpiarTokens === 'function') {
+        limpiarTokens();
+      }
+      mostrarAlerta('Su sesión ha expirado. Por favor, inicie sesión nuevamente.', 'error');
       setTimeout(() => {
         window.location.href = 'index.html';
       }, 2000);
@@ -199,7 +203,7 @@ function manejarErrorAPI(error, response = null) {
     }
     
     if (response.status === 403) {
-      mostrarAlerta('No tienes permisos para realizar esta acción.', 'error');
+      mostrarAlerta('No tiene permisos para realizar esta acción.', 'error');
       return;
     }
     
@@ -209,12 +213,12 @@ function manejarErrorAPI(error, response = null) {
     }
     
     if (response.status >= 500) {
-      mostrarAlerta('Error interno del servidor. Intenta nuevamente.', 'error');
+      mostrarAlerta('Error interno del servidor. Intente nuevamente.', 'error');
       return;
     }
   }
   
-  mostrarAlerta('Error de conexión. Verifica tu conexión a internet.', 'error');
+  mostrarAlerta('Error de conexión. Verifique su conexión a internet.', 'error');
 }
 
 // Abrir perfil del paciente en nueva pestaña (opcionalmente en modo edición)

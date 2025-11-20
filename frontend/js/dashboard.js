@@ -85,9 +85,7 @@ async function realizarBusqueda() {
     }
     
     try {
-        const response = await fetch(`/api/pacientes?buscar=${encodeURIComponent(termino)}`, {
-            credentials: 'include'
-        });
+        const response = await fetchConAuth(`/api/pacientes?buscar=${encodeURIComponent(termino)}`);
         
         if (response.ok) {
             const pacientes = await response.json();

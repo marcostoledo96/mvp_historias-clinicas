@@ -90,7 +90,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (data.email && !validarEmail(data.email)) { mostrarAlerta('Email inválido', 'error'); return; }
 
     try {
-      const resp = await fetch('/api/pacientes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify(data) });
+      const resp = await fetchConAuth('/api/pacientes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
       const result = await resp.json();
       if (resp.ok) {
         mostrarAlerta('Paciente creado', 'success');

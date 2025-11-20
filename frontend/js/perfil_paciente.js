@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 // * cargarPerfil(id): trae datos del paciente y carga el formulario
 async function cargarPerfil(id) {
   try {
-    const resp = await fetch(`/api/pacientes/${id}`, { credentials: 'include' });
+    const resp = await fetchConAuth(`/api/pacientes/${id}`);
     if (!resp.ok) return manejarErrorAPI(null, resp);
     const p = await resp.json();
 
@@ -58,7 +58,7 @@ async function cargarPerfil(id) {
 // * cargarConsultasPaciente(id): lista consultas asociadas al paciente
 async function cargarConsultasPaciente(id) {
   try {
-    const resp = await fetch(`/api/consultas/paciente/${id}`, { credentials: 'include' });
+    const resp = await fetchConAuth(`/api/consultas/paciente/${id}`);
     if (!resp.ok) return manejarErrorAPI(null, resp);
     const consultas = await resp.json();
 
@@ -104,8 +104,8 @@ function configurarEventosPerfil(id) {
     }
 
     try {
-      const resp = await fetch(`/api/pacientes/${id}`, {
-        method: 'PUT', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify(data)
+      const resp = await fetchConAuth(`/api/pacientes/${id}`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data)
       });
       const result = await resp.json();
       if (resp.ok) {

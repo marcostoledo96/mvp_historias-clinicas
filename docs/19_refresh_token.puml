@@ -1,0 +1,79 @@
+@startuml
+' Diagrama - Renovación de token JWT (Refresh)
+' Flujo de renovación automática cuando el access token expira
+title Renovación de Access Token (Refresh)
+
+actor Doctor
+participant "Sistema Web" as Web
+participant "Servidor (API REST)" as Server
+
+== Escenario: Access token expirado ==
+
+Doctor -> Web : Realiza acción (ej: ver pacientes)
+Web -> Server : GET /api/pacientes\nAuthorization: Bearer <access_token>
+
+note right of Server
+  // Middleware verifica el token JWT
+  // jwt.verify detecta que expiró
+end note
+
+Server -> Server : jwt.verify(access_token, JWT_SECRET)
+
+alt access token expirado
+  Server --> Web : HTTP 401 Unauthorized\n{ codigo: "TOKEN_EXPIRADO" }
+  
+  note right of Web
+    // Cliente detecta TOKEN_EXPIRADO
+    // Intenta renovar con refresh token
+  end note
+  
+  Web -> Web : Detecta codigo === "TOKEN_EXPIRADO"
+  Web -> Server : POST /api/auth/refresh\n{ refreshToken }
+  
+  note right of Server
+    // Verifico refresh token
+    // Si es válido, genero nuevos tokens
+  end note
+  
+  Server -> Server : jwt.verify(refreshToken, JWT_REFRESH_SECRET)
+  
+  alt refresh token válido
+    Server -> Server : Genera nuevo access_token y refresh_token
+    Server --> Web : HTTP 200 OK\n{ accessToken, refreshToken }
+    
+    note right of Web
+      // Guarda nuevos tokens en localStorage
+      // Reintenta la petición original
+    end note
+    
+    Web -> Web : Guardar nuevos tokens
+    Web -> Server : GET /api/pacientes\nAuthorization: Bearer <nuevo_access_token>
+    Server --> Web : HTTP 200 OK + datos
+    Web --> Doctor : Muestra listado de pacientes
+    
+  else refresh token inválido o expirado
+    Server --> Web : HTTP 401 Unauthorized\n{ error: "Refresh token inválido" }
+    
+    note right of Web
+      // Ambos tokens inválidos
+      // Usuario debe volver a loguearse
+    end note
+    
+    Web -> Web : Limpiar tokens de localStorage
+    Web --> Doctor : Redirige a login (index.html)
+  end
+  
+else access token válido
+  Server --> Web : HTTP 200 OK + datos
+  Web --> Doctor : Muestra resultado
+end
+
+note over Web, Server
+  **Ventajas del refresh token:**
+  - Access token corto (1h): menor ventana de ataque si se roba
+  - Refresh token largo (7d): mejor experiencia sin login frecuente
+  - Renovación automática transparente para el usuario
+  - Si refresh token expira, solo entonces se requiere nuevo login
+end note
+
+@enduml

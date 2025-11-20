@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 async function cargarPacientes(termino = '') {
   try {
     const url = termino ? `/api/pacientes?buscar=${encodeURIComponent(termino)}` : '/api/pacientes';
-    const resp = await fetch(url, { credentials: 'include' });
+    const resp = await fetchConAuth(url);
     if (!resp.ok) return manejarErrorAPI(null, resp);
     const pacientes = await resp.json();
 
@@ -136,7 +136,7 @@ function renderPaginacion() {
 // * cargarDetallePaciente(id): muestra card con datos y prepara edición
 async function cargarDetallePaciente(id) {
   try {
-    const resp = await fetch(`/api/pacientes/${id}`, { credentials: 'include' });
+    const resp = await fetchConAuth(`/api/pacientes/${id}`);
     if (!resp.ok) return manejarErrorAPI(null, resp);
     const p = await resp.json();
 
@@ -164,7 +164,7 @@ async function cargarDetallePaciente(id) {
 // * editarPaciente(id): obtiene datos y abre card de edición prellenada
 async function editarPaciente(id) {
   try {
-    const resp = await fetch(`/api/pacientes/${id}`, { credentials: 'include' });
+    const resp = await fetchConAuth(`/api/pacientes/${id}`);
     if (!resp.ok) return manejarErrorAPI(null, resp);
     const p = await resp.json();
     prepararEdicionPaciente(p, true);
@@ -214,10 +214,9 @@ function prepararEdicionPaciente(paciente, abrir = false) {
       }
 
       try {
-        const resp = await fetch(`/api/pacientes/${id}`, {
+        const resp = await fetchConAuth(`/api/pacientes/${id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
           body: JSON.stringify(data)
         });
         const result = await resp.json();
@@ -245,7 +244,7 @@ function prepararEdicionPaciente(paciente, abrir = false) {
 async function eliminarPaciente(id) {
   if (!confirmarAccion('¿Eliminar paciente?')) return;
   try {
-    const resp = await fetch(`/api/pacientes/${id}`, { method: 'DELETE', credentials: 'include' });
+    const resp = await fetchConAuth(`/api/pacientes/${id}`, { method: 'DELETE' });
     if (resp.ok) {
       mostrarAlerta('Paciente eliminado', 'success');
       await cargarPacientes();

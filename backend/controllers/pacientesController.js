@@ -7,7 +7,7 @@ const controladorPacientes = {
   obtenerPacientes: async (req, res) => {
     try {
       const { buscar } = req.query;
-      const idUsuario = req.session?.usuario?.id;
+      const idUsuario = req.user?.id;
       if (!idUsuario) return res.status(401).json({ error: 'No autenticado' });
       
       let pacientes;
@@ -28,7 +28,7 @@ const controladorPacientes = {
   obtenerPacientePorId: async (req, res) => {
     try {
       const { id } = req.params;
-      const idUsuario = req.session?.usuario?.id;
+      const idUsuario = req.user?.id;
       if (!idUsuario) return res.status(401).json({ error: 'No autenticado' });
       
       const paciente = await Paciente.buscarPorId(id, idUsuario);
@@ -47,7 +47,7 @@ const controladorPacientes = {
   // Crear un nuevo paciente
   crearPaciente: async (req, res) => {
     try {
-      const idUsuario = req.session?.usuario?.id;
+      const idUsuario = req.user?.id;
       if (!idUsuario) return res.status(401).json({ error: 'No autenticado' });
       
       const {
@@ -98,7 +98,7 @@ const controladorPacientes = {
   // * Crea paciente mínimo (sólo nombre y apellido)
   crearPacienteMinimo: async (req, res) => {
     try {
-      const idUsuario = req.session?.usuario?.id;
+      const idUsuario = req.user?.id;
       if (!idUsuario) return res.status(401).json({ error: 'No autenticado' });
       const { nombre, apellido } = req.body;
       if (!nombre || !apellido) {
@@ -117,7 +117,7 @@ const controladorPacientes = {
   actualizarPaciente: async (req, res) => {
     try {
       const { id } = req.params;
-      const idUsuario = req.session?.usuario?.id;
+      const idUsuario = req.user?.id;
       if (!idUsuario) return res.status(401).json({ error: 'No autenticado' });
       const {
         nombre, apellido, dni, fecha_nacimiento, sexo, telefono, telefono_adicional, email,
@@ -164,7 +164,7 @@ const controladorPacientes = {
   eliminarPaciente: async (req, res) => {
     try {
       const { id } = req.params;
-      const idUsuario = req.session?.usuario?.id;
+      const idUsuario = req.user?.id;
       if (!idUsuario) return res.status(401).json({ error: 'No autenticado' });
       const pacienteEliminado = await Paciente.eliminar(id, idUsuario);
       
@@ -185,7 +185,7 @@ const controladorPacientes = {
   buscarPorDni: async (req, res) => {
     try {
       const { dni } = req.params;
-      const idUsuario = req.session?.usuario?.id;
+      const idUsuario = req.user?.id;
       if (!idUsuario) return res.status(401).json({ error: 'No autenticado' });
       const paciente = await Paciente.buscarPorDni(dni, idUsuario);
 

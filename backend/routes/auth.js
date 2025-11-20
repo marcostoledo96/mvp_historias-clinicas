@@ -1,4 +1,4 @@
-// ! RUTAS DE AUTENTICACIÓN
+// RUTAS DE AUTENTICACIÓN
 // Todas las rutas relacionadas con usuarios: login, logout, perfil y recuperación de contraseña
 const express = require('express');
 const router = express.Router();
@@ -8,20 +8,26 @@ const { logging, validarCamposRequeridos, verificarAuth, verificarAdmin } = requ
 // Logging de todas las peticiones (para debuggear)
 router.use(logging);
 
-// ** LOGIN Y SESIÓN **
-// POST /api/auth/login - Iniciar sesión
+// LOGIN Y SESIÓN
+// POST /api/auth/login - Iniciar sesión con JWT
 router.post('/login', 
   validarCamposRequeridos(['email', 'password']),
   authController.login
 );
 
-// POST /api/auth/logout - Cerrar sesión
+// POST /api/auth/logout - Cerrar sesión (logout lógico)
 router.post('/logout', authController.logout);
 
-// GET /api/auth/verificar - Verificar si hay sesión activa
-router.get('/verificar', authController.verificarSesion);
+// GET /api/auth/verificar - Verificar si el token JWT es válido
+router.get('/verificar', verificarAuth, authController.verificarSesion);
 
-// ** REGISTRO (SOLO ADMIN) **
+// POST /api/auth/refresh - Renovar access token con refresh token
+router.post('/refresh',
+  validarCamposRequeridos(['refreshToken']),
+  authController.refresh
+);
+
+// REGISTRO (SOLO ADMIN)
 // POST /api/auth/registro - Crear nuevo usuario
 // IMPORTANTE: solo los admin pueden crear usuarios
 router.post('/registro', 
@@ -31,7 +37,7 @@ router.post('/registro',
   authController.registro
 );
 
-// ** RECUPERACIÓN DE CONTRASEÑA CON PREGUNTA SECRETA **
+// RECUPERACIÓN DE CONTRASEÑA CON PREGUNTA SECRETA
 // POST /api/auth/pregunta-secreta/configurar - El usuario configura su pregunta
 router.post('/pregunta-secreta/configurar',
   verificarAuth,
@@ -51,7 +57,7 @@ router.post('/recuperar',
   authController.recuperarConPreguntaSecreta
 );
 
-// ** PERFIL DEL USUARIO LOGUEADO **
+// PERFIL DEL USUARIO LOGUEADO
 // GET /api/auth/perfil - Ver datos del perfil
 router.get('/perfil', verificarAuth, authController.obtenerPerfil);
 

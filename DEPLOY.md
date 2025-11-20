@@ -1,11 +1,12 @@
-# 🚀 Guía para deploy en Vercel (configuración actual)
+# 🚀 Guía de deploy en Vercel (configuración actualizada)
 
-Esta guía refleja la configuración vigente del proyecto para desplegar en Vercel con una función serverless que sirve API y frontend estático.
+Esta guía describe el despliegue del proyecto en Vercel con autenticación JWT y función serverless que sirve API y frontend estático.
 
 ## 🏗️ Arquitectura
 
 - Frontend: archivos estáticos dentro de `frontend/` (servidos por Express)
 - Backend: `backend/server.js` empaquetado como función serverless (@vercel/node)
+- Autenticación: JWT (JSON Web Tokens) stateless, sin estado de sesión en servidor
 - Base de datos: PostgreSQL en Neon
 - Dominio: `tu-proyecto.vercel.app`
 
@@ -34,15 +35,23 @@ No hace falta setear Build Command ni Output Directory manualmente. Dejá Instal
 
 ## 🔐 Variables de entorno
 
-Configuralas en Vercel > Settings > Environment Variables:
+Configuralas en Vercel > Settings > Environment Variables (ver `vercel-env-template.txt` como referencia):
 
 ```
 PORT=3000
 DATABASE_URL=postgresql://<usuario>:<password>@<host-neon>:5432/<dbname>?sslmode=require
-SESSION_SECRET=un_secreto_largo_y_aleatorio
+JWT_SECRET=<secreto_largo_aleatorio_para_access_tokens>
+JWT_EXPIRES_IN=1h
+JWT_REFRESH_SECRET=<secreto_diferente_para_refresh_tokens>
+JWT_REFRESH_EXPIRES_IN=7d
 NODE_ENV=production
 NO_SSL=false
 PGSSLMODE=require
+```
+
+**Importante**: Los secrets de JWT deben ser cadenas largas y aleatorias. Podés generarlos con:
+```bash
+node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
 ```
 
 Nota: En Neon, usá SSL. Si es necesario, `PGSSLMODE=no-verify`.
@@ -61,11 +70,12 @@ Nota: En Neon, usá SSL. Si es necesario, `PGSSLMODE=no-verify`.
 
 Podés ajustar o crear usuarios con los scripts en `backend/scripts/`.
 
-## � Solución de problemas
+## 🔧 Solución de problemas
 
-- CORS: verificá los orígenes permitidos (en prod se valida contra el dominio de Vercel).
+- CORS: verificá los orígenes permitidos (en producción se valida contra el dominio de Vercel).
 - DB: chequeá `DATABASE_URL` (Neon) y SSL.
-- Sesiones: `SESSION_SECRET` definido y cookies habilitadas. En serverless se usa cookie-session.
+- Autenticación: verificá que `JWT_SECRET` y `JWT_REFRESH_SECRET` estén configurados. Los tokens JWT se almacenan en `localStorage` del cliente y se envían en el header `Authorization: Bearer <token>`.
+- Tokens expirados: el sistema implementa renovación automática con refresh tokens. Si ambos tokens expiran, el usuario debe volver a iniciar sesión.
 
 ## 📁 Archivos relevantes
 

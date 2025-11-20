@@ -1,6 +1,6 @@
 @startuml
 ' Diagrama 01 - Login del doctor
-' Sistema simplificado con autenticación basada en cookies de sesión
+' Sistema con autenticación JWT (JSON Web Tokens)
 ' Base de datos: PostgreSQL en Neon
 title 01 - Login del doctor
 
@@ -30,12 +30,22 @@ alt usuario encontrado
   
   alt contraseña correcta
     note right of Server
-      // Creo la sesión del usuario
-      // req.session.usuario guarda id, nombre, email, rol
-      // Si marcó 'Recordarme', la sesión dura 30 días
+      // Genero JWT access token (válido 1 hora)
+      // y refresh token (válido 7 días)
+      // Access token contiene: id, email, nombre, rol
+      // Refresh token contiene: id, tipo='refresh'
     end note
     
-    Server --> Web : HTTP 200 OK\n+ Set-Cookie: session=...\n{ nombre, rol }
+    Server -> Server : jwt.sign(payload, JWT_SECRET)
+    Server --> Web : HTTP 200 OK\n{ accessToken, refreshToken, usuario }
+    
+    note right of Web
+      // Cliente guarda tokens en localStorage
+      // localStorage.setItem('accessToken', ...)
+      // localStorage.setItem('refreshToken', ...)
+    end note
+    
+    Web -> Web : Guardar tokens en localStorage
     Web --> Doctor : Redirige a inicio.html
     
   else contraseña incorrecta
@@ -50,8 +60,9 @@ end
 
 note over Server, DB
   **Seguridad**: Las contraseñas se guardan con bcrypt (10 rounds)
-  **Sesión**: Usamos cookie-session compatible con Vercel serverless
+  **Autenticación**: JWT stateless con access token (1h) y refresh token (7d)
   **Multitenancy**: Cada usuario pertenece a un `id_usuario` (aislamiento por usuario)
+  **Tokens**: Se envían en header Authorization: Bearer <token> en cada petición
 end note
 
 @enduml

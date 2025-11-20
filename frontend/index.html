@@ -74,6 +74,7 @@
     </div>
 
     <script src="js/utils.js"></script>
+    <script src="js/jwtStorage.js"></script>
     <script src="js/auth.js"></script>
     <script>
         // Ya no redirige automáticamente si hay sesión activa (evita "auto login")
@@ -98,8 +99,7 @@
                 const formData = new FormData(e.target);
                 const loginData = {
                     email: formData.get('email'),
-                    password: formData.get('password'),
-                    remember: formData.get('remember') ? true : false
+                    password: formData.get('password')
                 };
                 
                 const response = await fetch('/api/auth/login', {
@@ -107,7 +107,6 @@
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    credentials: 'include',
                     body: JSON.stringify(loginData)
                 });
                 // Intentar parsear JSON; si falla (p.ej. HTML de error 500), caer a texto
@@ -120,6 +119,9 @@
                 }
 
                 if (response.ok) {
+                    // Guardar tokens JWT en localStorage
+                    guardarTokens(result.accessToken, result.refreshToken);
+                    
                     mostrarAlerta('Login exitoso. Redirigiendo...', 'success');
                     setTimeout(() => {
                         window.location.href = 'pacientes.html';

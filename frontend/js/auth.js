@@ -1,21 +1,25 @@
 // ! Autenticación (frontend)
 // * Este módulo expone utilidades comunes para páginas protegidas:
-//   - verificarAutenticacion: consulta al backend si hay sesión activa
-//   - cerrarSesion: cierra la sesión y redirige a login
-//   - verificarAcceso: middleware de páginas protegidas; redirige a login si no hay sesión
+//   - verificarAutenticacion: consulta al backend si hay sesión activa con JWT
+//   - cerrarSesion: cierra la sesión (borra tokens) y redirige a login
+//   - verificarAcceso: middleware de páginas protegidas; redirige a login si no hay token
 //   - actualizarInfoUsuario: refresca el nombre visible en el header
 //   - configurarLogout: ata el botón de cerrar sesión del header
 //   - registrarUsuario: alta de usuario (sólo administradores)
 //   - inicializarPaginaProtegida: bootstrap común (auth + header + navegación activa)
-// ? Dependencias: utils.js (mostrarAlerta, manejarErrorAPI, confirmarAccion)
+// ? Dependencias: utils.js (mostrarAlerta, manejarErrorAPI, confirmarAccion), jwtStorage.js
 // TODO: Unificar mensajes de error/success vía una capa central de notificaciones
 
 // Verificar si el usuario está autenticado
 async function verificarAutenticacion() {
+  // Verificar si hay token en localStorage
+  if (!tieneTokens()) {
+    return { autenticado: false };
+  }
+  
   try {
-    const response = await fetch('/api/auth/verificar', {
-      method: 'GET',
-      credentials: 'include'
+    const response = await fetchConAuth('/api/auth/verificar', {
+      method: 'GET'
     });
     
     if (response.ok) {
@@ -33,23 +37,24 @@ async function verificarAutenticacion() {
 // Cerrar sesión
 async function cerrarSesion() {
   try {
-    const response = await fetch('/api/auth/logout', {
-      method: 'POST',
-      credentials: 'include'
+    // Notificar al backend (opcional, ya que JWT es stateless)
+    await fetchConAuth('/api/auth/logout', {
+      method: 'POST'
     });
     
-    if (response.ok) {
-      // * UX: feedback + pequeña espera para que el usuario lo perciba
-      mostrarAlerta('Sesión cerrada exitosamente', 'success');
-      setTimeout(() => {
-        window.location.href = 'index.html';
-      }, 1000);
-    } else {
-      mostrarAlerta('Error al cerrar sesión', 'error');
-    }
+    // Limpiar tokens del localStorage
+    limpiarTokens();
+    
+    // * UX: feedback + pequeña espera para que el usuario lo perciba
+    mostrarAlerta('Sesión cerrada exitosamente', 'success');
+    setTimeout(() => {
+      window.location.href = 'index.html';
+    }, 1000);
   } catch (error) {
+    // Aunque falle el backend, limpiamos tokens localmente
+    limpiarTokens();
     console.error('Error cerrando sesión:', error);
-    mostrarAlerta('Error de conexión', 'error');
+    window.location.href = 'index.html';
   }
 }
 
@@ -135,12 +140,8 @@ function configurarLogout() {
 // Función para registrar nuevo usuario (solo admins)
 async function registrarUsuario(datosUsuario) {
   try {
-    const response = await fetch('/api/auth/registro', {
+    const response = await fetchConAuth('/api/auth/registro', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      credentials: 'include',
       body: JSON.stringify(datosUsuario)
     });
     

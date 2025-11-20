@@ -88,7 +88,7 @@
   async function buscarPacientes(termino='') {
     try {
       const url = termino? `/api/pacientes?buscar=${encodeURIComponent(termino)}` : '/api/pacientes';
-      const resp = await fetch(url, { credentials: 'include' });
+      const resp = await fetchConAuth(url);
       if (!resp.ok) return manejarErrorAPI(null, resp);
       const data = await resp.json();
       selState.lista = data;
@@ -99,7 +99,7 @@
   }
 
   // * abrirSelectorPacientes({ onSelect, prefill }): entrada pública; adjunta callback y abre modal
-  function abrirSelectorPacientes({ onSelect, prefill='' }={}) {
+  function abrirSelectorPacientes({ onSelect, prefill='' }=) {
     ensureModal();
     selState.onSelect = onSelect || null;
     const modal = document.getElementById('modal-selector-pacientes');

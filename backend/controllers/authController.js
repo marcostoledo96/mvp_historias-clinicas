@@ -1,32 +1,36 @@
 const bcrypt = require('bcryptjs');
 const Usuario = require('../models/Usuario');
+const { generarAccessToken, generarRefreshToken, verificarRefreshToken } = require('../utils/jwt');
 
-// * Controlador de Autenticación *
+// Controlador de Autenticación
 // Este archivo maneja todo lo relacionado con usuarios:
-// - Login/Logout: verifico email y contraseña, creo sesión con cookies
+// - Login/Logout: verifico email y contraseña, emito tokens JWT
 // - Registro: solo los admin pueden crear nuevos usuarios
 // - Perfil: ver y editar datos del usuario logueado
 // - Recuperación de contraseña: usando pregunta secreta que configura cada usuario
+// - Refresh: renovar access token usando refresh token
 //
 // NOTAS IMPORTANTES:
 // - Las contraseñas siempre se guardan con bcrypt (hash seguro)
-// - Las sesiones usan cookie-session (compatible con Vercel serverless)
+// - La autenticación usa JWT (JSON Web Tokens) con access y refresh tokens
+// - Access token: vida corta (ej. 1h), se envía en cada request
+// - Refresh token: vida larga (ej. 7d), solo se usa para renovar el access token
 // - Cada usuario solo ve sus propios datos (multitenancy por id_usuario)
 
 const authController = {
-  // ** LOGIN: Iniciar sesión **
-  // Recibe: { email, password, remember }
-  // Retorna: datos del usuario + crea sesión con cookie
+  // LOGIN: Iniciar sesión
+  // Recibe: { email, password }
+  // Retorna: { accessToken, refreshToken, usuario }
   //
   // Flujo:
   // 1. Verifico que vengan email y contraseña
   // 2. Busco el usuario en la BD por email
   // 3. Comparo la contraseña con bcrypt (nunca guardo contraseñas en texto plano)
-  // 4. Si todo ok, creo la sesión con cookie-session
-  // 5. Si el usuario marcó "Recordarme", la cookie dura 30 días
+  // 4. Si todo ok, genero access token y refresh token
+  // 5. Devuelvo ambos tokens más datos del usuario
   login: async (req, res) => {
     try {
-      const { email, password, remember } = req.body;
+      const { email, password } = req.body;
 
       // Validar que vengan los datos requeridos
       if (!email || !password) {
@@ -46,28 +50,15 @@ const authController = {
         return res.status(401).json({ error: 'Credenciales inválidas' });
       }
 
-      // Crear la sesión (cookie-session guarda todo en la cookie, no en memoria)
-      req.session = req.session || {};
-      req.session.usuarioId = usuario.id_usuario;
-      req.session.usuario = {
-        id: usuario.id_usuario,
-        email: usuario.email,
-        nombre: usuario.nombre_completo,
-        rol: usuario.rol
-      };
+      // Generar tokens JWT
+      const accessToken = generarAccessToken(usuario);
+      const refreshToken = generarRefreshToken(usuario);
 
-      // Si marcó "Recordarme", la sesión dura 30 días
-      // Si no, dura hasta que cierre el navegador
-      if (remember) {
-        const dias30 = 30 * 24 * 60 * 60 * 1000; // 30 días en milisegundos
-        if (req.sessionOptions) req.sessionOptions.maxAge = dias30;
-      } else {
-        if (req.sessionOptions) req.sessionOptions.maxAge = undefined;
-      }
-
-      // Enviar respuesta exitosa con los datos del usuario
+      // Enviar respuesta exitosa con los tokens y datos del usuario
       res.json({
         mensaje: 'Login exitoso',
+        accessToken,
+        refreshToken,
         usuario: {
           id: usuario.id_usuario,
           email: usuario.email,
@@ -82,12 +73,11 @@ const authController = {
     }
   },
 
-  // ** LOGOUT: Cerrar sesión **
-  // Simplemente borro la cookie de sesión
-  // cookie-session: al setear req.session = null, la cookie se borra
+  // LOGOUT: Cerrar sesión
+  // Con JWT el logout es "lógico" - el cliente debe borrar los tokens
+  // El servidor simplemente confirma la acción
   logout: (req, res) => {
     try {
-      req.session = null; // Esto borra la cookie
       res.json({ mensaje: 'Sesión cerrada exitosamente' });
     } catch (error) {
       console.error('Error en logout:', error);
@@ -95,23 +85,62 @@ const authController = {
     }
   },
 
-  // ** VERIFICAR SESIÓN **
-  // Chequeo si hay un usuario logueado
-  // Usado por el frontend para saber si mostrar login o contenido
+  // VERIFICAR SESIÓN
+  // Verifica si el token JWT actual es válido
+  // El middleware verificarAuth ya validó el token, así que si llegamos acá es porque es válido
   verificarSesion: (req, res) => {
-    if (req.session.usuario) {
-      // Hay sesión activa, devuelvo los datos del usuario
+    if (req.user) {
+      // Token válido, devuelvo los datos del usuario
       res.json({ 
         autenticado: true, 
-        usuario: req.session.usuario 
+        usuario: req.user
       });
     } else {
-      // No hay sesión
+      // No hay token o es inválido
       res.json({ autenticado: false });
     }
   },
 
-  // ** REGISTRO: Crear nuevo usuario (solo admin) **
+  // REFRESH TOKEN
+  // Renueva el access token usando el refresh token
+  // Recibe: { refreshToken }
+  // Retorna: { accessToken, refreshToken (nuevo) }
+  refresh: async (req, res) => {
+    try {
+      const { refreshToken } = req.body;
+
+      if (!refreshToken) {
+        return res.status(400).json({ error: 'Refresh token requerido' });
+      }
+
+      // Verificar el refresh token
+      const decoded = verificarRefreshToken(refreshToken);
+
+      // Buscar el usuario para generar nuevos tokens
+      const usuario = await Usuario.buscarPorId(decoded.id);
+      if (!usuario) {
+        return res.status(404).json({ error: 'Usuario no encontrado' });
+      }
+
+      // Generar nuevos tokens
+      const nuevoAccessToken = generarAccessToken(usuario);
+      const nuevoRefreshToken = generarRefreshToken(usuario);
+
+      res.json({
+        accessToken: nuevoAccessToken,
+        refreshToken: nuevoRefreshToken
+      });
+
+    } catch (error) {
+      console.error('Error en refresh:', error);
+      if (error.message === 'Refresh token expirado' || error.message === 'Refresh token inválido') {
+        return res.status(401).json({ error: error.message, codigo: 'REFRESH_TOKEN_INVALIDO' });
+      }
+      res.status(500).json({ error: 'Error al renovar token' });
+    }
+  },
+
+  // REGISTRO: Crear nuevo usuario (solo admin)
   // Recibe: { email, nombre_completo, password, rol }
   // IMPORTANTE: solo los administradores pueden crear usuarios nuevos
   //
@@ -159,13 +188,13 @@ const authController = {
   },
 };
 
-// ** CONFIGURAR PREGUNTA SECRETA **
+// CONFIGURAR PREGUNTA SECRETA
 // El usuario configura su pregunta y respuesta secreta para poder recuperar su contraseña
 // Recibe: { pregunta, respuesta }
 // IMPORTANTE: la respuesta se guarda hasheada, igual que la contraseña
 authController.configurarPreguntaSecreta = async (req, res) => {
   try {
-    const idUsuario = req.session?.usuario?.id;
+    const idUsuario = req.user?.id;
     if (!idUsuario) {
       return res.status(401).json({ error: 'Debes estar logueado' });
     }
@@ -192,7 +221,7 @@ authController.configurarPreguntaSecreta = async (req, res) => {
   }
 };
 
-// ** OBTENER PREGUNTA SECRETA **
+// OBTENER PREGUNTA SECRETA
 // Paso 1 de recuperación: el usuario ingresa su email y le muestro su pregunta
 // Recibe: { email }
 // Retorna: { pregunta }
@@ -228,7 +257,7 @@ authController.obtenerPreguntaSecreta = async (req, res) => {
   }
 };
 
-// ** RECUPERAR CONTRASEÑA CON PREGUNTA SECRETA **
+// RECUPERAR CONTRASEÑA CON PREGUNTA SECRETA
 // Paso 2 de recuperación: verifico la respuesta y cambio la contraseña
 // Recibe: { email, respuesta, nueva_password }
 //
@@ -282,11 +311,11 @@ authController.recuperarConPreguntaSecreta = async (req, res) => {
   }
 };
 
-// ** VER PERFIL **
+// VER PERFIL
 // Devuelve los datos del usuario logueado
 authController.obtenerPerfil = async (req, res) => {
   try {
-    const id = req.session?.usuario?.id;
+    const id = req.user?.id;
     if (!id) {
       return res.status(401).json({ error: 'Debes estar logueado' });
     }
@@ -313,12 +342,12 @@ authController.obtenerPerfil = async (req, res) => {
   }
 };
 
-// ** EDITAR PERFIL **
+// EDITAR PERFIL
 // Permite cambiar email y nombre del usuario logueado
 // Recibe: { email, nombre }
 authController.actualizarPerfil = async (req, res) => {
   try {
-    const id = req.session?.usuario?.id;
+    const id = req.user?.id;
     if (!id) {
       return res.status(401).json({ error: 'Debes estar logueado' });
     }
@@ -343,10 +372,6 @@ authController.actualizarPerfil = async (req, res) => {
       return res.status(400).json({ error: 'No hay nada para actualizar' });
     }
 
-    // Actualizar los datos en la sesión también
-    req.session.usuario.email = actualizado.email;
-    req.session.usuario.nombre = actualizado.nombre_completo;
-
     res.json({ 
       mensaje: 'Perfil actualizado exitosamente', 
       usuario: { 
@@ -362,13 +387,13 @@ authController.actualizarPerfil = async (req, res) => {
   }
 };
 
-// ** CAMBIAR CONTRASEÑA **
+// CAMBIAR CONTRASEÑA
 // El usuario logueado puede cambiar su contraseña
 // Recibe: { password_actual, password_nueva }
 // IMPORTANTE: debo verificar que la contraseña actual sea correcta
 authController.cambiarPassword = async (req, res) => {
   try {
-    const id = req.session?.usuario?.id;
+    const id = req.user?.id;
     if (!id) {
       return res.status(401).json({ error: 'Debes estar logueado' });
     }

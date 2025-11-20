@@ -24,7 +24,7 @@ async function cargarConsultas(opcion = { tipo: 'todas' }) {
       url = `/api/consultas/paciente/${encodeURIComponent(opcion.valor)}`;
     }
 
-    const resp = await fetch(url, { credentials: 'include' });
+    const resp = await fetchConAuth(url);
     if (!resp.ok) return manejarErrorAPI(null, resp);
     const consultas = await resp.json();
 
@@ -102,10 +102,9 @@ function configurarEventosConsultas() {
       const btn = document.getElementById('btn-guardar-consulta');
       if (btn && btn.disabled) return;
       setButtonLoading('btn-guardar-consulta', true);
-      const resp = await fetch('/api/consultas', {
+      const resp = await fetchConAuth('/api/consultas', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify(data)
       });
       const result = await resp.json();
@@ -130,7 +129,7 @@ function configurarEventosConsultas() {
 async function eliminarConsulta(id) {
   if (!confirmarAccion('¿Eliminar consulta?')) return;
   try {
-    const resp = await fetch(`/api/consultas/${id}`, { method: 'DELETE', credentials: 'include' });
+    const resp = await fetchConAuth(`/api/consultas/${id}`, { method: 'DELETE' });
     if (resp.ok) {
       mostrarAlerta('Consulta eliminada', 'success');
       await cargarConsultas();
